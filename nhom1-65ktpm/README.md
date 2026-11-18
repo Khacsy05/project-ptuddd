@@ -41,3 +41,14 @@
 
 ## 4. Hướng Dẫn Cài Đặt & Chạy Ứng Dụng
 Xem hướng dẫn chi tiết tại tệp [danhsachnhom.md](./danhsachnhom.md).
+
+---
+
+## 5. Quy Chuẩn Làm Việc & Phân Nhánh Nội Bộ
+- **Nhánh tích hợp chính của nhóm:** `nhom01-65ktpm`
+- **Quy trình đóng góp:**
+  1. Thành viên tạo nhánh cá nhân hoặc nhánh tính năng từ `nhom01-65ktpm` (ví dụ: `duchiep`, `feature/...`).
+  2. Thực hiện commit các thay đổi trong phạm vi thư mục của nhóm (`nhom1-65ktpm/`).
+  3. Đẩy nhánh lên GitHub và tạo **Pull Request** trỏ về nhánh `nhom01-65ktpm` *(tuyệt đối không tạo Pull Request vào nhánh `main`)*.
+  4. Trưởng nhóm kiểm tra và hợp nhất (merge) vào nhánh chung của nhóm.
+
