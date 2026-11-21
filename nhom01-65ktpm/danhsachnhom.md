@@ -1,4 +1,4 @@
-# Danh Sách Thành Viên - Nhóm 1 (nhom1-65ktpm)
+# Danh Sách Thành Viên - Nhóm 01 (nhom01-65ktpm)
 
 - **Lớp học phần / Lớp sinh hoạt:** 65KTPM
 - **Tên đề tài / Ứng dụng:** Ứng dụng Quản lý Kỷ luật & Luyện tập Bóng đá (Football Discipline & Training Tracker)
@@ -12,7 +12,7 @@
 | :---: | :--- | :---: | :---: | :---: | :--- | :---: | :--- |
 | 1 | Nguyễn Minh Đức  | [MSV 1] | 65KTPM | Thành viên | Supabase Cloud Backend & Hồ sơ Cầu thủ (Baller Profile) | 100% | member1@example.com |
 | 2 | Nguyễn Khắc Sỹ| [MSV 2] | 65KTPM | Trưởng nhóm | Giáo án Kỷ luật Bài tập (Football Habits & Streak 🔥) | 100% | member2@example.com |
-| 3 | Bùi Đức Hiệp | [MSV 3] | 65KTPM | Thành viên | Bộ đếm Phiên tập Huấn luyện (Drill Timer & Cloud Log) | 100% | member3@example.com |
+| 3 | Bùi Đức Hiệp | [MSV 3] | 65KTPM | Thành viên | Bộ đếm Phiên tập Huấn luyện (Drill Timer & Cloud Log) | 100% | hieptop12@gmail.com |
 | 4 | Hà Văn Phong| [MSV 4] | 65KTPM | Thành viên | Nhật ký Trận đấu & Buổi tập (Match Journal & Storage) | 100% | member4@example.com |
 | 5 | Nguyễn Hồng Thái  | [MSV 5] | 65KTPM | Thành viên | Thống kê Phong độ Cầu thủ & Nhắc lịch ra sân (Analytics) | 100% | member5@example.com |
 
@@ -40,7 +40,7 @@
 ### Các bước chạy dự án:
 ```bash
 # 1. Di chuyển vào thư mục mã nguồn
-cd nhom1-65ktpm/src
+cd nhom01-65ktpm/src
 
 # 2. Cài đặt các dependencies
 flutter pub get
