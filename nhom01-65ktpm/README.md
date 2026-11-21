@@ -37,7 +37,7 @@ nhom01-65ktpm/
     ├── lib/             # Mã nguồn chính (Dart)
     ├── android/         # Cấu hình dự án cho Android
     ├── ios/             # Cấu hình dự án cho iOS
-    └── pubspec.yaml     # Cấu hình thư viện và tài nguyên
+    └── pubspec.yaml     # Cấu hình thư viện và tài nguyênn
 ```
 
 ---
