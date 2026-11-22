@@ -237,21 +237,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     }
   }
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Lỗi tải ảnh: $e (Bạn cũng có thể nhập link ảnh trực tiếp)'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isUploadingAvatar = false;
-        });
-      }
-    }
-  }
 
   // Hộp thoại lựa chọn ảnh hoặc nhập URL ảnh
   void _showAvatarOptionsDialog() {

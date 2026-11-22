@@ -14,7 +14,8 @@ class AnalyticsService {
   /// 1. Lấy Báo cáo tổng hợp phong độ & KPIs của cầu thủ
   Future<OverallSummaryReport> getOverallSummary(String userId) async {
     try {
-      if (_client != null && userId.isNotEmpty) {
+      final client = _client;
+      if (client != null && userId.isNotEmpty) {
         // Truy vấn dữ liệu thực tế từ Supabase
         // 1. Tổng phút tập luyện từ bảng training_drills_sessions
         int totalMinutesWeek = 0;
@@ -24,7 +25,7 @@ class AnalyticsService {
           final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
           final startOfMonth = DateTime(now.year, now.month, 1);
 
-          final drillData = await _client
+          final drillData = await client
               .from('training_drills_sessions')
               .select('duration_minutes, created_at')
               .eq('user_id', userId);
@@ -47,7 +48,7 @@ class AnalyticsService {
         int assists = 0;
         double totalRating = 0.0;
         try {
-          final matchData = await _client
+          final matchData = await client
               .from('match_journals')
               .select('rating, goals, assists')
               .eq('user_id', userId);
@@ -65,7 +66,7 @@ class AnalyticsService {
         // 3. Tỷ lệ kỷ luật từ bảng habit_logs
         double disciplineRate = 85.0;
         try {
-          final habitLogs = await _client
+          final habitLogs = await client
               .from('habit_logs')
               .select('is_completed')
               .eq('user_id', userId);
