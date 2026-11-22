@@ -4,7 +4,9 @@ import 'package:image_picker/image_picker.dart';
 import '../models/player_profile_model.dart';
 import '../services/auth_service.dart';
 import '../services/profile_service.dart';
+import 'analytics_screen.dart';
 import 'login_screen.dart';
+import 'reminder_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -533,6 +535,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
         centerTitle: true,
         actions: [
           IconButton(
+            tooltip: 'Thống kê phong độ (Phân hệ 5)',
+            icon: const Icon(Icons.insights, color: primaryColor),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AnalyticsScreen(userId: user?.id ?? '')),
+              );
+            },
+          ),
+          IconButton(
+            tooltip: 'Nhắc lịch ra sân (Phân hệ 5)',
+            icon: const Icon(Icons.alarm_on, color: Color(0xFF38BDF8)),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ReminderScreen()),
+              );
+            },
+          ),
+          IconButton(
             tooltip: 'Đăng xuất',
             icon: const Icon(Icons.logout, color: Colors.redAccent),
             onPressed: _handleSignOut,
@@ -645,7 +667,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
+
+              // Phân hệ 5: Thống Kê & Nhắc Lịch Ra Sân (Nguyễn Hồng Thái)
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AnalyticsScreen(userId: user?.id ?? ''),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF162235),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: primaryColor.withValues(alpha: 0.35)),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.insights, color: primaryColor, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Thống Kê Thể Lực',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const ReminderScreen()),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF162235),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.35)),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.alarm_on, color: Color(0xFF38BDF8), size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Nhắc Lịch Ra Sân',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
 
               // Nút Đổi Mật Khẩu
               SizedBox(
@@ -805,7 +897,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
 
               // Nút Đổi Mật Khẩu
               SizedBox(
