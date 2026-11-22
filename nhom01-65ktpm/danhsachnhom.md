@@ -14,7 +14,7 @@
 | 2 | Nguyễn Khắc Sỹ| [MSV 2] | 65KTPM | Trưởng nhóm | Giáo án Kỷ luật Bài tập (Football Habits & Streak 🔥) | 100% | member2@example.com |
 | 3 | Bùi Đức Hiệp | [MSV 3] | 65KTPM | Thành viên | Bộ đếm Phiên tập Huấn luyện (Drill Timer & Cloud Log) | 100% | hieptop12@gmail.com |
 | 4 | Hà Văn Phong| [MSV 4] | 65KTPM | Thành viên | Nhật ký Trận đấu & Buổi tập (Match Journal & Storage) | 100% | member4@example.com |
-| 5 | Nguyễn Hồng Thái  | [MSV 5] | 65KTPM | Thành viên | Thống kê Phong độ Cầu thủ & Nhắc lịch ra sân (Analytics) | 100% | member5@example.com |
+| 5 | Nguyễn Hồng Thái  | [MSV 5] | 65KTPM | Thành viên | Thống kê Phong độ Cầu thủ & Nhắc lịch ra sân (Analytics) | 100% | ngotuananh2005@gmail.com |
 
 ---
 
