@@ -1,20 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/login_screen.dart';
-import 'package:flutter_dotenv/.env';
-// Thông tin kết nối Supabase Cloud (lấy từ .env)
-const String supabaseUrl = dotenv.env['SUPABASE_URL']!;
-const String supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY']!;
 
-// Khởi tạo Supabase client toàn cục
-final supabase = Supabase.instance.client;
+// Getter toàn cục giúp mọi màn hình trong app truy cập SupabaseClient dễ dàng và an toàn
+SupabaseClient get supabase => Supabase.instance.client;
 
 void main() async {
+  // Đảm bảo Flutter framework đã sẵn sàng
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Khởi tạo kết nối Supabase
+  // 1. Nạp biến môi trường từ file .env
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint("Lỗi khi nạp file .env: $e");
+  }
+
+  // 2. Đọc trực tiếp từ file .env (Tuyệt đối không lộ key trong code)
+  final String supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
+  final String supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+
+  if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+    throw Exception('Lỗi: Chưa cấu hình SUPABASE_URL hoặc SUPABASE_ANON_KEY trong file .env');
+  }
+
+  // 3. Khởi tạo kết nối Supabase Cloud
   await Supabase.initialize(
     url: supabaseUrl,
     anonKey: supabaseAnonKey,

@@ -46,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _isConnectionOk = true;
         _connectionMessage = 'Kết nối thành công (PostgreSQL & RLS Online)';
       });
-      debugPrint('✅ [Supabase] Kết nối thành công: $supabaseUrl');
+      debugPrint('✅ [Supabase] Kết nối thành công tới Cloud!');
     } catch (e) {
       if (!mounted) return;
       setState(() {
