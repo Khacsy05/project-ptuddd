@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../main.dart';
 import 'register_screen.dart';
+import 'profile_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -104,7 +105,11 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         );
 
-        // TODO: Chuyển hướng sang Dashboard / Home Screen
+        // Chuyển hướng sang màn hình Hồ sơ Cầu thủ
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ProfileScreen()),
+        );
       }
     } on AuthException catch (e) {
       if (!mounted) return;
