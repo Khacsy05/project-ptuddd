@@ -347,6 +347,123 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // Hộp thoại đổi mật khẩu mới cho cầu thủ
+  void _showChangePasswordDialog() {
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    final dialogFormKey = GlobalKey<FormState>();
+    bool isChanging = false;
+    bool obscureNew = true;
+    bool obscureConfirm = true;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF162235),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.lock_reset, color: Color(0xFF10B981)),
+              SizedBox(width: 8),
+              Text('Đổi Mật Khẩu', style: TextStyle(color: Colors.white, fontSize: 18)),
+            ],
+          ),
+          content: Form(
+            key: dialogFormKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: newPasswordController,
+                  obscureText: obscureNew,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Mật khẩu mới',
+                    labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                    filled: true,
+                    fillColor: const Color(0xFF0F172A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscureNew ? Icons.visibility_off : Icons.visibility, color: const Color(0xFF94A3B8)),
+                      onPressed: () => setDialogState(() => obscureNew = !obscureNew),
+                    ),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Vui lòng nhập mật khẩu mới';
+                    if (v.length < 6) return 'Mật khẩu tối thiểu 6 ký tự';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: confirmPasswordController,
+                  obscureText: obscureConfirm,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Xác nhận mật khẩu',
+                    labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                    filled: true,
+                    fillColor: const Color(0xFF0F172A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscureConfirm ? Icons.visibility_off : Icons.visibility, color: const Color(0xFF94A3B8)),
+                      onPressed: () => setDialogState(() => obscureConfirm = !obscureConfirm),
+                    ),
+                  ),
+                  validator: (v) {
+                    if (v != newPasswordController.text) return 'Mật khẩu xác nhận không khớp';
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Hủy', style: TextStyle(color: Color(0xFF94A3B8))),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: isChanging
+                  ? null
+                  : () async {
+                      if (!dialogFormKey.currentState!.validate()) return;
+                      setDialogState(() => isChanging = true);
+                      try {
+                        await _authService.updatePassword(
+                          newPassword: newPasswordController.text.trim(),
+                        );
+                        if (!context.mounted) return;
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Đã cập nhật mật khẩu mới thành công!'),
+                            backgroundColor: Color(0xFF10B981),
+                          ),
+                        );
+                      } catch (e) {
+                        setDialogState(() => isChanging = false);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.redAccent),
+                        );
+                      }
+                    },
+              child: isChanging
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Cập Nhật'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // Xử lý Đăng xuất
   Future<void> _handleSignOut() async {
     final confirm = await showDialog<bool>(
@@ -393,7 +510,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     const primaryColor = Color(0xFF10B981);
     const backgroundColor = Color(0xFF0B1320);
     const cardColor = Color(0xFF162235);
-    final user = supabase.auth.currentUser;
+    final user = _authService.currentUser;
 
     if (_isLoading) {
       return const Scaffold(
@@ -526,6 +643,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Nút Đổi Mật Khẩu
+              SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: _showChangePasswordDialog,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF94A3B8),
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  icon: const Icon(Icons.lock_reset, size: 20),
+                  label: const Text(
+                    'ĐỔI MẬT KHẨU TÀI KHOẢN',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, letterSpacing: 0.8),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -666,6 +802,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: Text(
                     _isSaving ? 'ĐANG LƯU DỮ LIỆU...' : 'LƯU HỒ SƠ CẦU THỦ',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: 1.1),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Nút Đổi Mật Khẩu
+              SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: _showChangePasswordDialog,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF94A3B8),
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  icon: const Icon(Icons.lock_reset, size: 20),
+                  label: const Text(
+                    'ĐỔI MẬT KHẨU TÀI KHOẢN',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, letterSpacing: 0.8),
                   ),
                 ),
               ),
