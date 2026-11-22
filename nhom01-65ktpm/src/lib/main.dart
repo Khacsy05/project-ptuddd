@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/login_screen.dart';
+import 'screens/profile_screen.dart';
 
 // Getter toàn cục giúp mọi màn hình trong app truy cập SupabaseClient dễ dàng và an toàn
 SupabaseClient get supabase => Supabase.instance.client;
@@ -31,11 +32,15 @@ void main() async {
     anonKey: supabaseAnonKey,
   );
 
-  runApp(const BallerDisciplineApp());
+  // Kiểm tra phiên đăng nhập đã lưu
+  final bool hasSession = supabase.auth.currentUser != null;
+
+  runApp(BallerDisciplineApp(hasSession: hasSession));
 }
 
 class BallerDisciplineApp extends StatelessWidget {
-  const BallerDisciplineApp({super.key});
+  final bool hasSession;
+  const BallerDisciplineApp({super.key, required this.hasSession});
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +56,7 @@ class BallerDisciplineApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const LoginScreen(),
+      home: hasSession ? const ProfileScreen() : const LoginScreen(),
     );
   }
 }
