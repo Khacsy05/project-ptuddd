@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -165,18 +166,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Chọn ảnh từ thư viện thiết bị và upload qua ProfileService
-  Future<void> _pickAndUploadImage() async {
+  // Phân giải ảnh Avatar hỗ trợ cả Base64 (lưu trực tiếp trong CSDL) và URL (Storage/Web)
+  ImageProvider? _getAvatarImageProvider(String? url) {
+    if (url == null || url.trim().isEmpty) return null;
+    final trimmed = url.trim();
+    if (trimmed.startsWith('data:image')) {
+      try {
+        final commaIndex = trimmed.indexOf(',');
+        final base64Content = commaIndex != -1 ? trimmed.substring(commaIndex + 1) : trimmed;
+        return MemoryImage(base64Decode(base64Content));
+      } catch (e) {
+        debugPrint('Lỗi giải mã Base64 avatar: $e');
+        return null;
+      }
+    } else if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return NetworkImage(trimmed);
+    } else {
+      // Thử giải mã nếu là chuỗi Base64 thuần
+      try {
+        return MemoryImage(base64Decode(trimmed));
+      } catch (_) {
+        return null;
+      }
+    }
+  }
+
+  // Tải ảnh từ thư viện hoặc chụp camera và lưu vào CSDL
+  Future<void> _pickAndUploadImage({ImageSource source = ImageSource.gallery}) async {
     final user = _authService.currentUser;
     if (user == null) return;
 
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 85,
+        source: source,
+        maxWidth: 400,
+        maxHeight: 400,
+        imageQuality: 75,
       );
 
       if (image == null) return;
@@ -186,20 +212,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
 
       final Uint8List imageBytes = await image.readAsBytes();
-      final String fileExt = image.name.split('.').last.toLowerCase();
+      final String fileExt = (image.name.contains('.') ? image.name.split('.').last : 'jpg').toLowerCase();
 
-      // Gọi ProfileService để tải ảnh lên Supabase Storage
-      final publicUrl = await _profileService.uploadAvatar(
-        userId: user.id,
-        imageBytes: imageBytes,
-        fileExtension: fileExt,
-      );
+      // 1. Mã hóa Base64 để lưu trực tiếp vào CSDL bảng player_profiles
+      final String base64String = base64Encode(imageBytes);
+      final String base64DataUri = 'data:image/$fileExt;base64,$base64String';
+
+      String finalAvatarUrl = base64DataUri;
+      bool isStorage = false;
+
+      // 2. Thử upload lên Supabase Storage nếu bucket 'avatars' đã tồn tại
+      try {
+        final storageUrl = await _profileService.uploadAvatar(
+          userId: user.id,
+          imageBytes: imageBytes,
+          fileExtension: fileExt,
+        );
+        finalAvatarUrl = storageUrl;
+        isStorage = true;
+      } catch (storageErr) {
+        debugPrint('Supabase Storage chưa tạo bucket hoặc bị lỗi ($storageErr). Tự động lưu Base64 vào CSDL.');
+      }
 
       setState(() {
-        _avatarUrl = publicUrl;
+        _avatarUrl = finalAvatarUrl;
       });
 
-      // Lưu cập nhật vào CSDL
+      // 3. Lưu cập nhật ngay vào bảng player_profiles trong CSDL Supabase
       await _profileService.saveProfile(
         PlayerProfileModel(
           id: user.id,
@@ -208,22 +247,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           preferredFoot: _selectedFoot,
           jerseyNumber: int.tryParse(_jerseyController.text.trim()) ?? 10,
           clubTeam: _clubController.text.trim(),
-          avatarUrl: publicUrl,
+          avatarUrl: finalAvatarUrl,
         ),
       );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Đã tải lên và cập nhật Avatar mới thành công!'),
-          backgroundColor: Color(0xFF10B981),
+        SnackBar(
+          content: Text(isStorage
+              ? 'Đã tải ảnh lên Storage và lưu CSDL thành công!'
+              : 'Đã lưu ảnh đại diện trực tiếp vào CSDL thành công!'),
+          backgroundColor: const Color(0xFF10B981),
         ),
       );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lỗi tải ảnh: $e (Bạn cũng có thể dán link ảnh trực tiếp)'),
+          content: Text('Lỗi xử lý ảnh: $e (Bạn cũng có thể dán link ảnh trực tiếp)'),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -238,7 +279,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Hộp thoại lựa chọn ảnh hoặc nhập URL ảnh
   void _showAvatarOptionsDialog() {
-    final urlController = TextEditingController(text: _avatarUrl ?? '');
+    final urlController = TextEditingController(
+      text: (_avatarUrl != null && _avatarUrl!.startsWith('http')) ? _avatarUrl! : '',
+    );
 
     showModalBottomSheet(
       context: context,
@@ -248,85 +291,103 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Cập Nhật Ảnh Đại Diện',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx);
-                _pickAndUploadImage();
-              },
-              icon: const Icon(Icons.photo_library),
-              label: const Text('Chọn ảnh từ thiết bị (Upload Storage)'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Cập Nhật Ảnh Đại Diện',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
               ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Hoặc chọn nhanh Avatar phong cách:',
-              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: _presetAvatars.map((url) {
-                return GestureDetector(
-                  onTap: () {
-                    setState(() => _avatarUrl = url);
-                    Navigator.pop(ctx);
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: _avatarUrl == url ? const Color(0xFF10B981) : Colors.transparent,
-                        width: 2.5,
-                      ),
-                    ),
-                    child: CircleAvatar(
-                      radius: 26,
-                      backgroundImage: NetworkImage(url),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
-            // Nhập Link URL
-            TextField(
-              controller: urlController,
-              style: const TextStyle(color: Colors.white, fontSize: 14),
-              decoration: InputDecoration(
-                hintText: 'Hoặc dán URL hình ảnh trực tiếp...',
-                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
-                filled: true,
-                fillColor: const Color(0xFF0F172A),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.check, color: Color(0xFF10B981)),
-                  onPressed: () {
-                    if (urlController.text.trim().isNotEmpty) {
-                      setState(() => _avatarUrl = urlController.text.trim());
-                      Navigator.pop(ctx);
-                    }
-                  },
+              const SizedBox(height: 16),
+              // Nút 1: Chọn ảnh từ thiết bị (Thư viện)
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _pickAndUploadImage(source: ImageSource.gallery);
+                },
+                icon: const Icon(Icons.photo_library),
+                label: const Text('Chọn ảnh từ thiết bị (Lưu vào CSDL)'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-          ],
+              const SizedBox(height: 10),
+              // Nút 2: Chụp ảnh từ Camera
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _pickAndUploadImage(source: ImageSource.camera);
+                },
+                icon: const Icon(Icons.camera_alt, color: Color(0xFF10B981)),
+                label: const Text('Chụp ảnh từ Camera (Lưu vào CSDL)', style: TextStyle(color: Colors.white)),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF10B981)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Hoặc chọn nhanh Avatar phong cách:',
+                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: _presetAvatars.map((url) {
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _avatarUrl = url);
+                      Navigator.pop(ctx);
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: _avatarUrl == url ? const Color(0xFF10B981) : Colors.transparent,
+                          width: 2.5,
+                        ),
+                      ),
+                      child: CircleAvatar(
+                        radius: 26,
+                        backgroundImage: NetworkImage(url),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+              // Nhập Link URL
+              TextField(
+                controller: urlController,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Hoặc dán URL hình ảnh trực tiếp...',
+                  hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+                  filled: true,
+                  fillColor: const Color(0xFF0F172A),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.check, color: Color(0xFF10B981)),
+                    onPressed: () {
+                      if (urlController.text.trim().isNotEmpty) {
+                        setState(() => _avatarUrl = urlController.text.trim());
+                        Navigator.pop(ctx);
+                      }
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
         ),
       ),
     );
@@ -559,9 +620,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         CircleAvatar(
                           radius: 46,
                           backgroundColor: primaryColor.withValues(alpha: 0.2),
-                          backgroundImage: _avatarUrl != null && _avatarUrl!.isNotEmpty
-                              ? NetworkImage(_avatarUrl!)
-                              : null,
+                          backgroundImage: _getAvatarImageProvider(_avatarUrl),
                           child: _avatarUrl == null || _avatarUrl!.isEmpty
                               ? const Icon(Icons.sports_soccer, size: 50, color: Colors.white)
                               : null,
