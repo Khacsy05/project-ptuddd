@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../main.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,6 +18,45 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _rememberMe = false;
   bool _isLoading = false;
 
+  // Biến kiểm tra trạng thái kết nối Supabase
+  bool _isCheckingConnection = true;
+  bool _isConnectionOk = false;
+  String _connectionMessage = 'Đang kiểm tra kết nối Supabase Cloud...';
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSupabaseConnection();
+  }
+
+  // Hàm kiểm tra kết nối trực tiếp tới CSDL Supabase
+  Future<void> _checkSupabaseConnection() async {
+    setState(() {
+      _isCheckingConnection = true;
+    });
+
+    try {
+      // Thử truy vấn 1 bản ghi từ bảng player_profiles
+      await supabase.from('player_profiles').select('id').limit(1);
+
+      if (!mounted) return;
+      setState(() {
+        _isCheckingConnection = false;
+        _isConnectionOk = true;
+        _connectionMessage = 'Kết nối thành công (PostgreSQL & RLS Online)';
+      });
+      debugPrint('✅ [Supabase] Kết nối thành công: $supabaseUrl');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isCheckingConnection = false;
+        _isConnectionOk = false;
+        _connectionMessage = 'Lỗi kết nối: ${e.toString()}';
+      });
+      debugPrint('❌ [Supabase] Lỗi kết nối: $e');
+    }
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -23,6 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // Xử lý Đăng nhập với Supabase Auth
   void _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -30,29 +72,66 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    // Giả lập xử lý đăng nhập (Sẵn sàng tích hợp Supabase Auth)
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final response = await supabase.auth.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-      _isLoading = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white),
-            const SizedBox(width: 8),
-            Text('Đăng nhập thành công: ${_emailController.text}'),
-          ],
+      if (response.user != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Đăng nhập thành công! Chào mừng cầu thủ (${response.user!.email})',
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 8),
+              Expanded(child: Text('Lỗi xác thực: ${e.message}')),
+            ],
+          ),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
-        backgroundColor: const Color(0xFF10B981),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Đã có lỗi xảy ra: $e'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -99,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
                   // Title
                   const Text(
@@ -121,7 +200,60 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Color(0xFF94A3B8),
                     ),
                   ),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 20),
+
+                  // Supabase Connection Status Badge (Kiểm tra kết nối)
+                  GestureDetector(
+                    onTap: _checkSupabaseConnection,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _isCheckingConnection
+                            ? Colors.amber.withValues(alpha: 0.15)
+                            : (_isConnectionOk
+                                ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                                : Colors.redAccent.withValues(alpha: 0.15)),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(
+                          color: _isCheckingConnection
+                              ? Colors.amber.withValues(alpha: 0.4)
+                              : (_isConnectionOk
+                                  ? const Color(0xFF10B981).withValues(alpha: 0.5)
+                                  : Colors.redAccent.withValues(alpha: 0.5)),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            _isCheckingConnection
+                                ? Icons.sync
+                                : (_isConnectionOk ? Icons.cloud_done : Icons.cloud_off),
+                            size: 16,
+                            color: _isCheckingConnection
+                                ? Colors.amber
+                                : (_isConnectionOk ? const Color(0xFF10B981) : Colors.redAccent),
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              _isCheckingConnection ? 'Đang kiểm tra kết nối Supabase...' : _connectionMessage,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: _isCheckingConnection
+                                    ? Colors.amber
+                                    : (_isConnectionOk ? const Color(0xFF10B981) : Colors.redAccent),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
 
                   // Login Card Container
                   Container(
@@ -345,7 +477,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         onTap: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Chuyển hướng đến màn hình Đăng ký tài khoản!'),
+                              content: Text('Tính năng Đăng ký tài khoản đang được phát triển!'),
                               duration: Duration(seconds: 2),
                             ),
                           );

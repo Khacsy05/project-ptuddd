@@ -1,7 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/login_screen.dart';
+import 'package:flutter_dotenv/.env';
+// Thông tin kết nối Supabase Cloud (lấy từ .env)
+const String supabaseUrl = dotenv.env['SUPABASE_URL']!;
+const String supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY']!;
 
-void main() {
+// Khởi tạo Supabase client toàn cục
+final supabase = Supabase.instance.client;
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Khởi tạo kết nối Supabase
+  await Supabase.initialize(
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
+  );
+
   runApp(const BallerDisciplineApp());
 }
 
