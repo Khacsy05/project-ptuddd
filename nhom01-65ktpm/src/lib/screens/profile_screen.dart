@@ -1,8 +1,9 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../main.dart';
+import '../models/player_profile_model.dart';
+import '../services/auth_service.dart';
+import '../services/profile_service.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -14,6 +15,9 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
+
+  final AuthService _authService = AuthService();
+  final ProfileService _profileService = ProfileService();
 
   final _fullNameController = TextEditingController();
   final _jerseyController = TextEditingController(text: '10');
@@ -62,9 +66,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  // Tải dữ liệu hồ sơ cầu thủ từ bảng player_profiles
+  // Tải dữ liệu hồ sơ cầu thủ thông qua ProfileService
   Future<void> _loadUserProfile() async {
-    final user = supabase.auth.currentUser;
+    final user = _authService.currentUser;
     if (user == null) {
       if (!mounted) return;
       Navigator.pushReplacement(
@@ -75,19 +79,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     try {
-      final data = await supabase
-          .from('player_profiles')
-          .select()
-          .eq('id', user.id)
-          .maybeSingle();
+      final profile = await _profileService.getProfile(user.id);
 
-      if (data != null) {
-        _fullNameController.text = data['full_name'] ?? '';
-        _selectedPosition = data['position'] ?? 'Tiền đạo';
-        _selectedFoot = data['preferred_foot'] ?? 'Chân phải';
-        _jerseyController.text = (data['jersey_number'] ?? 10).toString();
-        _clubController.text = data['club_team'] ?? 'FC 65KTPM';
-        _avatarUrl = data['avatar_url'];
+      if (profile != null) {
+        _fullNameController.text = profile.fullName;
+        _selectedPosition = profile.position;
+        _selectedFoot = profile.preferredFoot;
+        _jerseyController.text = profile.jerseyNumber.toString();
+        _clubController.text = profile.clubTeam;
+        _avatarUrl = profile.avatarUrl;
       } else {
         // Nếu chưa có dòng profile thì nạp từ metadata đăng ký
         final meta = user.userMetadata;
@@ -108,11 +108,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Lưu thông tin hồ sơ cầu thủ vào Supabase
+  // Lưu thông tin hồ sơ cầu thủ qua ProfileService
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final user = supabase.auth.currentUser;
+    final user = _authService.currentUser;
     if (user == null) return;
 
     setState(() {
@@ -120,18 +120,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
 
     try {
-      final updates = {
-        'id': user.id,
-        'full_name': _fullNameController.text.trim(),
-        'position': _selectedPosition,
-        'preferred_foot': _selectedFoot,
-        'jersey_number': int.tryParse(_jerseyController.text.trim()) ?? 10,
-        'club_team': _clubController.text.trim(),
-        'avatar_url': _avatarUrl,
-        'updated_at': DateTime.now().toIso8601String(),
-      };
+      final profile = PlayerProfileModel(
+        id: user.id,
+        fullName: _fullNameController.text.trim(),
+        position: _selectedPosition,
+        preferredFoot: _selectedFoot,
+        jerseyNumber: int.tryParse(_jerseyController.text.trim()) ?? 10,
+        clubTeam: _clubController.text.trim(),
+        avatarUrl: _avatarUrl,
+        updatedAt: DateTime.now(),
+      );
 
-      await supabase.from('player_profiles').upsert(updates);
+      await _profileService.saveProfile(profile);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -165,9 +165,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Chọn ảnh từ thư viện thiết bị và upload lên Supabase Storage bucket 'avatars'
+  // Chọn ảnh từ thư viện thiết bị và upload qua ProfileService
   Future<void> _pickAndUploadImage() async {
-    final user = supabase.auth.currentUser;
+    final user = _authService.currentUser;
     if (user == null) return;
 
     try {
@@ -187,28 +187,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       final Uint8List imageBytes = await image.readAsBytes();
       final String fileExt = image.name.split('.').last.toLowerCase();
-      final String fileName = '${user.id}/avatar_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
 
-      // Tải ảnh lên bucket 'avatars' trên Supabase Storage
-      await supabase.storage.from('avatars').uploadBinary(
-            fileName,
-            imageBytes,
-            fileOptions: FileOptions(contentType: 'image/$fileExt', upsert: true),
-          );
-
-      // Lấy link công khai
-      final String publicUrl = supabase.storage.from('avatars').getPublicUrl(fileName);
+      // Gọi ProfileService để tải ảnh lên Supabase Storage
+      final publicUrl = await _profileService.uploadAvatar(
+        userId: user.id,
+        imageBytes: imageBytes,
+        fileExtension: fileExt,
+      );
 
       setState(() {
         _avatarUrl = publicUrl;
       });
 
-      // Lưu ngay vào cơ sở dữ liệu
-      await supabase.from('player_profiles').upsert({
-        'id': user.id,
-        'avatar_url': publicUrl,
-        'updated_at': DateTime.now().toIso8601String(),
-      });
+      // Lưu cập nhật vào CSDL
+      await _profileService.saveProfile(
+        PlayerProfileModel(
+          id: user.id,
+          fullName: _fullNameController.text.trim(),
+          position: _selectedPosition,
+          preferredFoot: _selectedFoot,
+          jerseyNumber: int.tryParse(_jerseyController.text.trim()) ?? 10,
+          clubTeam: _clubController.text.trim(),
+          avatarUrl: publicUrl,
+        ),
+      );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -218,6 +220,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
     } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi tải ảnh: $e (Bạn cũng có thể dán link ảnh trực tiếp)'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingAvatar = false;
+        });
+      }
+    }
+  }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -361,7 +378,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (confirm == true) {
-      await supabase.auth.signOut();
+      await _authService.signOut();
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
