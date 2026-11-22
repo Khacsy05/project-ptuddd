@@ -3,18 +3,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart'; 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/login_screen.dart';
+import 'package:flutter_dotenv/.env';
+// Thông tin kết nối Supabase Cloud (lấy từ .env)
+const String supabaseUrl = dotenv.env['SUPABASE_URL']!;
+const String supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY']!;
 
-// Thông tin kết nối Supabase Cloud
-const String supabaseUrl = 'https://vghpttrsnnkhfauxwozi.supabase.co';
-const String supabaseAnonKey = 'sb_publishable_Z_UGavwpjACfY6gZCsvMEw_sBzJMlSs';
-
-// Khởi tạo Supabase client toàn cục cho toàn bộ ứng dụng
+// Khởi tạo Supabase client toàn cục
 final supabase = Supabase.instance.client;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Khởi tạo Supabase
+  // Khởi tạo kết nối Supabase
   await Supabase.initialize(
     url: supabaseUrl,
     anonKey: supabaseAnonKey,

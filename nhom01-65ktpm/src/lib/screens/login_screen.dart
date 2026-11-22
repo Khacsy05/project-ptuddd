@@ -19,6 +19,45 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _rememberMe = false;
   bool _isLoading = false;
 
+  // Biến kiểm tra trạng thái kết nối Supabase
+  bool _isCheckingConnection = true;
+  bool _isConnectionOk = false;
+  String _connectionMessage = 'Đang kiểm tra kết nối Supabase Cloud...';
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSupabaseConnection();
+  }
+
+  
+  Future<void> _checkSupabaseConnection() async {
+    setState(() {
+      _isCheckingConnection = true;
+    });
+
+    try {
+     
+      await supabase.from('player_profiles').select('id').limit(1);
+
+      if (!mounted) return;
+      setState(() {
+        _isCheckingConnection = false;
+        _isConnectionOk = true;
+        _connectionMessage = 'Kết nối thành công (PostgreSQL & RLS Online)';
+      });
+      debugPrint('✅ [Supabase] Kết nối thành công: $supabaseUrl');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isCheckingConnection = false;
+        _isConnectionOk = false;
+        _connectionMessage = 'Lỗi kết nối: ${e.toString()}';
+      });
+      debugPrint('❌ [Supabase] Lỗi kết nối: $e');
+    }
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -26,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // Xử lý Đăng nhập THẬT với Supabase Auth
+  
   void _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
