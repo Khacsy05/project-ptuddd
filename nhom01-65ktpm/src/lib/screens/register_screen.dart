@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../main.dart';
+import '../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -11,6 +11,7 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
+  final AuthService _authService = AuthService();
 
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -56,15 +57,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      // 1. Gọi Supabase Auth signUp kèm metadata họ tên và vị trí
-      final response = await supabase.auth.signUp(
+      // 1. Gọi signUp thông qua AuthService đóng gói
+      final response = await _authService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
-        data: {
-          'full_name': _fullNameController.text.trim(),
-          'position': _selectedPosition,
-          'preferred_foot': _selectedFoot,
-        },
+        fullName: _fullNameController.text.trim(),
+        position: _selectedPosition,
+        preferredFoot: _selectedFoot,
       );
 
       if (!mounted) return;
