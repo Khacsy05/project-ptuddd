@@ -136,3 +136,23 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ========================================================
+-- 6. CẤU HÌNH STORAGE BUCKET CHO ẢNH ĐẠI DIỆN (avatars)
+-- ========================================================
+-- Tạo bucket 'avatars' công khai để lưu trữ avatar cầu thủ nếu dùng Supabase Storage
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('avatars', 'avatars', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Policy 1: Mọi người đều có quyền xem ảnh đại diện công khai
+CREATE POLICY "Public Read Avatars" ON storage.objects
+    FOR SELECT USING (bucket_id = 'avatars');
+
+-- Policy 2: Cầu thủ đã xác thực được phép tải ảnh lên thư mục của chính mình
+CREATE POLICY "Auth Upload Avatars" ON storage.objects
+    FOR INSERT TO authenticated WITH CHECK (bucket_id = 'avatars');
+
+-- Policy 3: Cầu thủ đã xác thực được phép cập nhật ảnh của chính mình
+CREATE POLICY "Auth Update Avatars" ON storage.objects
+    FOR UPDATE TO authenticated USING (bucket_id = 'avatars');
