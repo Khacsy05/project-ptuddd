@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../main.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -23,6 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  // Xử lý Đăng nhập THẬT với Supabase Auth
   void _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -30,36 +34,165 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    // Giả lập xử lý đăng nhập (Sẵn sàng tích hợp Supabase Auth)
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final response = await supabase.auth.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-      _isLoading = false;
-    });
+      if (response.user != null) {
+        final email = response.user!.email ?? '';
+        final fullName = response.user!.userMetadata?['full_name'] ?? 'Cầu thủ';
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white),
-            const SizedBox(width: 8),
-            Text('Đăng nhập thành công: ${_emailController.text}'),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Đăng nhập thành công! Chào mừng $fullName ($email)',
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+
+        // TODO: Chuyển hướng sang Dashboard / Home Screen
+      }
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      String errorMsg = e.message;
+      if (errorMsg.contains('Invalid login credentials')) {
+        errorMsg = 'Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại!';
+      } else if (errorMsg.contains('Email not confirmed')) {
+        errorMsg = 'Email chưa được xác thực. Vui lòng kiểm tra hộp thư!';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 8),
+              Expanded(child: Text(errorMsg)),
+            ],
+          ),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Đã có lỗi xảy ra: $e'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  // Hộp thoại Khôi phục mật khẩu (Quên mật khẩu)
+  void _showForgotPasswordDialog() {
+    final resetEmailController = TextEditingController(text: _emailController.text.trim());
+    bool isResetting = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF162235),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Khôi Phục Mật Khẩu', style: TextStyle(color: Colors.white, fontSize: 18)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Nhập email tài khoản cầu thủ của bạn để nhận liên kết đặt lại mật khẩu:',
+                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: resetEmailController,
+                style: const TextStyle(color: Colors.white),
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  hintText: 'baller@example.com',
+                  hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+                  prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF10B981)),
+                  filled: true,
+                  fillColor: const Color(0xFF0F172A),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Hủy', style: TextStyle(color: Color(0xFF94A3B8))),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: isResetting
+                  ? null
+                  : () async {
+                      final email = resetEmailController.text.trim();
+                      if (email.isEmpty) return;
+
+                      setDialogState(() => isResetting = true);
+                      try {
+                        await supabase.auth.resetPasswordForEmail(email);
+                        if (!context.mounted) return;
+                        Navigator.of(ctx).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Đã gửi email khôi phục! Vui lòng kiểm tra hộp thư.'),
+                            backgroundColor: Color(0xFF10B981),
+                          ),
+                        );
+                      } catch (e) {
+                        setDialogState(() => isResetting = false);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.redAccent),
+                        );
+                      }
+                    },
+              child: isResetting
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Gửi Yêu Cầu'),
+            ),
           ],
         ),
-        backgroundColor: const Color(0xFF10B981),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF10B981); // Emerald Green
+    const primaryColor = Color(0xFF10B981);
     const secondaryColor = Color(0xFF047857);
-    const backgroundColor = Color(0xFF0B1320); // Dark Sport Navy
+    const backgroundColor = Color(0xFF0B1320);
     const cardColor = Color(0xFF162235);
 
     return Scaffold(
@@ -99,7 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
 
                   // Title
                   const Text(
@@ -116,12 +249,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Text(
                     'Kỷ luật sân cỏ - Đồng bộ đám mây',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF94A3B8),
-                    ),
+                    style: TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
                   ),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 32),
 
                   // Login Card Container
                   Container(
@@ -129,9 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: BoxDecoration(
                       color: cardColor,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.08),
-                      ),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.4),
@@ -145,11 +273,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         const Text(
                           'Đăng Nhập Cầu Thủ',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
                         ),
                         const SizedBox(height: 20),
 
@@ -167,10 +291,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             filled: true,
                             fillColor: const Color(0xFF0F172A),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: const BorderSide(color: primaryColor, width: 1.5),
@@ -180,7 +301,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             if (value == null || value.trim().isEmpty) {
                               return 'Vui lòng nhập email';
                             }
-                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                            final email = value.trim();
+                            final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                            if (!emailRegex.hasMatch(email)) {
                               return 'Email không đúng định dạng';
                             }
                             return null;
@@ -202,19 +325,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                                 color: const Color(0xFF94A3B8),
                               ),
-                              onPressed: () {
-                                setState(() {
-                                  _obscurePassword = !_obscurePassword;
-                                });
-                              },
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                             ),
                             filled: true,
                             fillColor: const Color(0xFF0F172A),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: const BorderSide(color: primaryColor, width: 1.5),
@@ -246,47 +362,20 @@ class _LoginScreenState extends State<LoginScreen> {
                                     activeColor: primaryColor,
                                     checkColor: Colors.black,
                                     side: const BorderSide(color: Color(0xFF64748B)),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    onChanged: (val) {
-                                      setState(() {
-                                        _rememberMe = val ?? false;
-                                      });
-                                    },
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                    onChanged: (val) => setState(() => _rememberMe = val ?? false),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
-                                const Text(
-                                  'Ghi nhớ',
-                                  style: TextStyle(
-                                    color: Color(0xFFCBD5E1),
-                                    fontSize: 13,
-                                  ),
-                                ),
+                                const Text('Ghi nhớ', style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 13)),
                               ],
                             ),
                             TextButton(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Tính năng khôi phục mật khẩu qua Email đang được tích hợp!'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              },
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
+                              onPressed: _showForgotPasswordDialog,
+                              style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
                               child: const Text(
                                 'Quên mật khẩu?',
-                                style: TextStyle(
-                                  color: primaryColor,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                style: TextStyle(color: primaryColor, fontSize: 13, fontWeight: FontWeight.w500),
                               ),
                             ),
                           ],
@@ -305,26 +394,17 @@ class _LoginScreenState extends State<LoginScreen> {
                               disabledBackgroundColor: primaryColor.withValues(alpha: 0.5),
                               elevation: 4,
                               shadowColor: primaryColor.withValues(alpha: 0.5),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             ),
                             child: _isLoading
                                 ? const SizedBox(
                                     width: 24,
                                     height: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: Colors.white,
-                                    ),
+                                    child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
                                   )
                                 : const Text(
                                     'VÀO SÂN (ĐĂNG NHẬP)',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.1,
-                                    ),
+                                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 1.1),
                                   ),
                           ),
                         ),
@@ -333,21 +413,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 28),
 
-                  // Register prompt
+                  // Register link
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Cầu thủ mới chưa có tài khoản? ',
-                        style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
-                      ),
+                      const Text('Cầu thủ mới chưa có tài khoản? ', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14)),
                       GestureDetector(
                         onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Chuyển hướng đến màn hình Đăng ký tài khoản!'),
-                              duration: Duration(seconds: 2),
-                            ),
+                          // Điều hướng sang màn hình Đăng ký
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const RegisterScreen()),
                           );
                         },
                         child: const Text(
