@@ -127,7 +127,7 @@ class _ReminderScreenState extends State<ReminderScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xFF0F172A),
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+                          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -184,7 +184,7 @@ class _ReminderScreenState extends State<ReminderScreen> {
                           avatar: Icon(cat.icon, size: 16, color: isCatSelected ? Colors.white : cat.color),
                           label: Text(cat.label),
                           selected: isCatSelected,
-                          selectedColor: cat.color.withOpacity(0.8),
+                          selectedColor: cat.color.withValues(alpha: 0.8),
                           backgroundColor: const Color(0xFF0F172A),
                           labelStyle: TextStyle(
                             color: isCatSelected ? Colors.white : Colors.white70,
@@ -366,7 +366,7 @@ class _ReminderScreenState extends State<ReminderScreen> {
         color: const Color(0xFF162032),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: reminder.isEnabled ? reminder.category.color.withOpacity(0.3) : Colors.white10,
+          color: reminder.isEnabled ? reminder.category.color.withValues(alpha: 0.3) : Colors.white10,
         ),
       ),
       child: Column(
@@ -379,7 +379,7 @@ class _ReminderScreenState extends State<ReminderScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: reminder.category.color.withOpacity(0.15),
+                  color: reminder.category.color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(reminder.category.icon, color: reminder.category.color, size: 26),
@@ -412,7 +412,7 @@ class _ReminderScreenState extends State<ReminderScreen> {
                     const SizedBox(height: 4),
                     Text(
                       'Lặp lại: ${reminder.repeatDaysText}',
-                      style: TextStyle(color: reminder.category.color.withOpacity(0.9), fontSize: 12),
+                      style: TextStyle(color: reminder.category.color.withValues(alpha: 0.9), fontSize: 12),
                     ),
                   ],
                 ),
@@ -421,7 +421,7 @@ class _ReminderScreenState extends State<ReminderScreen> {
               // Switch Bật / Tắt
               Switch(
                 value: reminder.isEnabled,
-                activeColor: const Color(0xFF10B981),
+                activeThumbColor: const Color(0xFF10B981),
                 activeTrackColor: const Color(0xFF064E3B),
                 onChanged: (_) => _toggleReminder(reminder.id),
               ),

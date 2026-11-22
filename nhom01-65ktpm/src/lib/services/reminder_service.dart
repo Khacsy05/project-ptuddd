@@ -101,7 +101,7 @@ class ReminderService {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: BorderSide(color: reminder.category.color.withOpacity(0.5), width: 1.5),
+          side: BorderSide(color: reminder.category.color.withValues(alpha: 0.5), width: 1.5),
         ),
         duration: const Duration(seconds: 4),
         content: Row(
@@ -109,7 +109,7 @@ class ReminderService {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: reminder.category.color.withOpacity(0.2),
+                color: reminder.category.color.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: Icon(reminder.category.icon, color: reminder.category.color, size: 24),
