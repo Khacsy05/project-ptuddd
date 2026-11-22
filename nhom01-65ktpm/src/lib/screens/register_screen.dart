@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../main.dart';
+import '../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -11,6 +11,7 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
+  final AuthService _authService = AuthService();
 
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -47,6 +48,75 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  // Tính toán độ mạnh mật khẩu (1 đến 4 điểm)
+  int _calculatePasswordStrength(String password) {
+    if (password.isEmpty) return 0;
+    int strength = 0;
+    if (password.length >= 6) strength++;
+    if (password.length >= 8) strength++;
+    if (RegExp(r'[A-Z]').hasMatch(password) && RegExp(r'[a-z]').hasMatch(password)) strength++;
+    if (RegExp(r'[0-9]').hasMatch(password) || RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) strength++;
+    return strength;
+  }
+
+  // Thanh hiển thị trực quan độ mạnh mật khẩu
+  Widget _buildPasswordStrengthBar() {
+    final password = _passwordController.text;
+    if (password.isEmpty) return const SizedBox.shrink();
+
+    final strength = _calculatePasswordStrength(password);
+    Color color;
+    String label;
+
+    switch (strength) {
+      case 1:
+        color = Colors.redAccent;
+        label = 'Mật khẩu yếu';
+        break;
+      case 2:
+        color = Colors.orangeAccent;
+        label = 'Mật khẩu trung bình';
+        break;
+      case 3:
+        color = Colors.amber;
+        label = 'Mật khẩu khá';
+        break;
+      case 4:
+      default:
+        color = const Color(0xFF10B981);
+        label = 'Mật khẩu mạnh & an toàn 🔥';
+        break;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: List.generate(4, (index) {
+              return Expanded(
+                child: Container(
+                  height: 4,
+                  margin: EdgeInsets.only(right: index < 3 ? 6.0 : 0.0),
+                  decoration: BoxDecoration(
+                    color: index < strength ? color : const Color(0xFF334155),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Xử lý đăng ký tài khoản thật với Supabase Auth
   void _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
@@ -56,15 +126,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      // 1. Gọi Supabase Auth signUp kèm metadata họ tên và vị trí
-      final response = await supabase.auth.signUp(
+      // 1. Gọi signUp thông qua AuthService đóng gói
+      final response = await _authService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
-        data: {
-          'full_name': _fullNameController.text.trim(),
-          'position': _selectedPosition,
-          'preferred_foot': _selectedFoot,
-        },
+        fullName: _fullNameController.text.trim(),
+        position: _selectedPosition,
+        preferredFoot: _selectedFoot,
       );
 
       if (!mounted) return;
@@ -390,6 +458,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                             focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryColor, width: 1.5)),
                           ),
+                          onChanged: (val) => setState(() {}),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Vui lòng nhập mật khẩu';
@@ -400,7 +469,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 16),
+                        _buildPasswordStrengthBar(),
+                        const SizedBox(height: 12),
 
                         // Nhập lại mật khẩu
                         const Text(

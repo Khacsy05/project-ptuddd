@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../main.dart';
+import '../services/auth_service.dart';
+import '../services/profile_service.dart';
 import 'register_screen.dart';
 import 'profile_screen.dart';
 
@@ -15,6 +16,9 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  final AuthService _authService = AuthService();
+  final ProfileService _profileService = ProfileService();
 
   bool _obscurePassword = true;
   bool _rememberMe = false;
@@ -31,21 +35,22 @@ class _LoginScreenState extends State<LoginScreen> {
     _checkSupabaseConnection();
   }
 
-  
+  // Hàm kiểm tra kết nối qua ProfileService
   Future<void> _checkSupabaseConnection() async {
     setState(() {
       _isCheckingConnection = true;
     });
 
     try {
-     
-      await supabase.from('player_profiles').select('id').limit(1);
+      final isOk = await _profileService.checkConnection();
 
       if (!mounted) return;
       setState(() {
         _isCheckingConnection = false;
-        _isConnectionOk = true;
-        _connectionMessage = 'Kết nối thành công (PostgreSQL & RLS Online)';
+        _isConnectionOk = isOk;
+        _connectionMessage = isOk
+            ? 'Kết nối thành công (PostgreSQL & RLS Online)'
+            : 'Không thể kết nối CSDL Supabase';
       });
       debugPrint('✅ [Supabase] Kết nối thành công tới Cloud!');
     } catch (e) {
@@ -66,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  
+  // Xử lý Đăng nhập qua AuthService
   void _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -75,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final response = await supabase.auth.signInWithPassword(
+      final response = await _authService.signInWithEmailPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
@@ -206,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       setDialogState(() => isResetting = true);
                       try {
-                        await supabase.auth.resetPasswordForEmail(email);
+                        await _authService.sendPasswordResetEmail(email: email);
                         if (!context.mounted) return;
                         Navigator.of(ctx).pop();
                         ScaffoldMessenger.of(context).showSnackBar(

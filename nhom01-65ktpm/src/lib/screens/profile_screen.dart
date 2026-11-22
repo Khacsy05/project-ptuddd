@@ -1,8 +1,9 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../main.dart';
+import '../models/player_profile_model.dart';
+import '../services/auth_service.dart';
+import '../services/profile_service.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -14,6 +15,9 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
+
+  final AuthService _authService = AuthService();
+  final ProfileService _profileService = ProfileService();
 
   final _fullNameController = TextEditingController();
   final _jerseyController = TextEditingController(text: '10');
@@ -62,9 +66,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  // Tải dữ liệu hồ sơ cầu thủ từ bảng player_profiles
+  // Tải dữ liệu hồ sơ cầu thủ thông qua ProfileService
   Future<void> _loadUserProfile() async {
-    final user = supabase.auth.currentUser;
+    final user = _authService.currentUser;
     if (user == null) {
       if (!mounted) return;
       Navigator.pushReplacement(
@@ -75,19 +79,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     try {
-      final data = await supabase
-          .from('player_profiles')
-          .select()
-          .eq('id', user.id)
-          .maybeSingle();
+      final profile = await _profileService.getProfile(user.id);
 
-      if (data != null) {
-        _fullNameController.text = data['full_name'] ?? '';
-        _selectedPosition = data['position'] ?? 'Tiền đạo';
-        _selectedFoot = data['preferred_foot'] ?? 'Chân phải';
-        _jerseyController.text = (data['jersey_number'] ?? 10).toString();
-        _clubController.text = data['club_team'] ?? 'FC 65KTPM';
-        _avatarUrl = data['avatar_url'];
+      if (profile != null) {
+        _fullNameController.text = profile.fullName;
+        _selectedPosition = profile.position;
+        _selectedFoot = profile.preferredFoot;
+        _jerseyController.text = profile.jerseyNumber.toString();
+        _clubController.text = profile.clubTeam;
+        _avatarUrl = profile.avatarUrl;
       } else {
         // Nếu chưa có dòng profile thì nạp từ metadata đăng ký
         final meta = user.userMetadata;
@@ -108,11 +108,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Lưu thông tin hồ sơ cầu thủ vào Supabase
+  // Lưu thông tin hồ sơ cầu thủ qua ProfileService
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final user = supabase.auth.currentUser;
+    final user = _authService.currentUser;
     if (user == null) return;
 
     setState(() {
@@ -120,18 +120,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
 
     try {
-      final updates = {
-        'id': user.id,
-        'full_name': _fullNameController.text.trim(),
-        'position': _selectedPosition,
-        'preferred_foot': _selectedFoot,
-        'jersey_number': int.tryParse(_jerseyController.text.trim()) ?? 10,
-        'club_team': _clubController.text.trim(),
-        'avatar_url': _avatarUrl,
-        'updated_at': DateTime.now().toIso8601String(),
-      };
+      final profile = PlayerProfileModel(
+        id: user.id,
+        fullName: _fullNameController.text.trim(),
+        position: _selectedPosition,
+        preferredFoot: _selectedFoot,
+        jerseyNumber: int.tryParse(_jerseyController.text.trim()) ?? 10,
+        clubTeam: _clubController.text.trim(),
+        avatarUrl: _avatarUrl,
+        updatedAt: DateTime.now(),
+      );
 
-      await supabase.from('player_profiles').upsert(updates);
+      await _profileService.saveProfile(profile);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -165,9 +165,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Chọn ảnh từ thư viện thiết bị và upload lên Supabase Storage bucket 'avatars'
+  // Chọn ảnh từ thư viện thiết bị và upload qua ProfileService
   Future<void> _pickAndUploadImage() async {
-    final user = supabase.auth.currentUser;
+    final user = _authService.currentUser;
     if (user == null) return;
 
     try {
@@ -187,28 +187,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       final Uint8List imageBytes = await image.readAsBytes();
       final String fileExt = image.name.split('.').last.toLowerCase();
-      final String fileName = '${user.id}/avatar_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
 
-      // Tải ảnh lên bucket 'avatars' trên Supabase Storage
-      await supabase.storage.from('avatars').uploadBinary(
-            fileName,
-            imageBytes,
-            fileOptions: FileOptions(contentType: 'image/$fileExt', upsert: true),
-          );
-
-      // Lấy link công khai
-      final String publicUrl = supabase.storage.from('avatars').getPublicUrl(fileName);
+      // Gọi ProfileService để tải ảnh lên Supabase Storage
+      final publicUrl = await _profileService.uploadAvatar(
+        userId: user.id,
+        imageBytes: imageBytes,
+        fileExtension: fileExt,
+      );
 
       setState(() {
         _avatarUrl = publicUrl;
       });
 
-      // Lưu ngay vào cơ sở dữ liệu
-      await supabase.from('player_profiles').upsert({
-        'id': user.id,
-        'avatar_url': publicUrl,
-        'updated_at': DateTime.now().toIso8601String(),
-      });
+      // Lưu cập nhật vào CSDL
+      await _profileService.saveProfile(
+        PlayerProfileModel(
+          id: user.id,
+          fullName: _fullNameController.text.trim(),
+          position: _selectedPosition,
+          preferredFoot: _selectedFoot,
+          jerseyNumber: int.tryParse(_jerseyController.text.trim()) ?? 10,
+          clubTeam: _clubController.text.trim(),
+          avatarUrl: publicUrl,
+        ),
+      );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -218,6 +220,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
     } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi tải ảnh: $e (Bạn cũng có thể dán link ảnh trực tiếp)'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingAvatar = false;
+        });
+      }
+    }
+  }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -330,6 +347,123 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // Hộp thoại đổi mật khẩu mới cho cầu thủ
+  void _showChangePasswordDialog() {
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    final dialogFormKey = GlobalKey<FormState>();
+    bool isChanging = false;
+    bool obscureNew = true;
+    bool obscureConfirm = true;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF162235),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.lock_reset, color: Color(0xFF10B981)),
+              SizedBox(width: 8),
+              Text('Đổi Mật Khẩu', style: TextStyle(color: Colors.white, fontSize: 18)),
+            ],
+          ),
+          content: Form(
+            key: dialogFormKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: newPasswordController,
+                  obscureText: obscureNew,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Mật khẩu mới',
+                    labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                    filled: true,
+                    fillColor: const Color(0xFF0F172A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscureNew ? Icons.visibility_off : Icons.visibility, color: const Color(0xFF94A3B8)),
+                      onPressed: () => setDialogState(() => obscureNew = !obscureNew),
+                    ),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Vui lòng nhập mật khẩu mới';
+                    if (v.length < 6) return 'Mật khẩu tối thiểu 6 ký tự';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: confirmPasswordController,
+                  obscureText: obscureConfirm,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'Xác nhận mật khẩu',
+                    labelStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                    filled: true,
+                    fillColor: const Color(0xFF0F172A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscureConfirm ? Icons.visibility_off : Icons.visibility, color: const Color(0xFF94A3B8)),
+                      onPressed: () => setDialogState(() => obscureConfirm = !obscureConfirm),
+                    ),
+                  ),
+                  validator: (v) {
+                    if (v != newPasswordController.text) return 'Mật khẩu xác nhận không khớp';
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Hủy', style: TextStyle(color: Color(0xFF94A3B8))),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: isChanging
+                  ? null
+                  : () async {
+                      if (!dialogFormKey.currentState!.validate()) return;
+                      setDialogState(() => isChanging = true);
+                      try {
+                        await _authService.updatePassword(
+                          newPassword: newPasswordController.text.trim(),
+                        );
+                        if (!context.mounted) return;
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Đã cập nhật mật khẩu mới thành công!'),
+                            backgroundColor: Color(0xFF10B981),
+                          ),
+                        );
+                      } catch (e) {
+                        setDialogState(() => isChanging = false);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.redAccent),
+                        );
+                      }
+                    },
+              child: isChanging
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Cập Nhật'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // Xử lý Đăng xuất
   Future<void> _handleSignOut() async {
     final confirm = await showDialog<bool>(
@@ -361,7 +495,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (confirm == true) {
-      await supabase.auth.signOut();
+      await _authService.signOut();
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
@@ -376,7 +510,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     const primaryColor = Color(0xFF10B981);
     const backgroundColor = Color(0xFF0B1320);
     const cardColor = Color(0xFF162235);
-    final user = supabase.auth.currentUser;
+    final user = _authService.currentUser;
 
     if (_isLoading) {
       return const Scaffold(
@@ -509,6 +643,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Nút Đổi Mật Khẩu
+              SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: _showChangePasswordDialog,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF94A3B8),
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  icon: const Icon(Icons.lock_reset, size: 20),
+                  label: const Text(
+                    'ĐỔI MẬT KHẨU TÀI KHOẢN',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, letterSpacing: 0.8),
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -649,6 +802,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: Text(
                     _isSaving ? 'ĐANG LƯU DỮ LIỆU...' : 'LƯU HỒ SƠ CẦU THỦ',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, letterSpacing: 1.1),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Nút Đổi Mật Khẩu
+              SizedBox(
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: _showChangePasswordDialog,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF94A3B8),
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  icon: const Icon(Icons.lock_reset, size: 20),
+                  label: const Text(
+                    'ĐỔI MẬT KHẨU TÀI KHOẢN',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, letterSpacing: 0.8),
                   ),
                 ),
               ),
