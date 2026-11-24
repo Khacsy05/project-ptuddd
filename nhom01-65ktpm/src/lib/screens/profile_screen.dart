@@ -260,14 +260,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           backgroundColor: const Color(0xFF10B981),
         ),
       );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Lỗi xử lý ảnh: $e (Bạn cũng có thể dán link ảnh trực tiếp)'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
     } finally {
       if (mounted) {
         setState(() {

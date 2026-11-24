@@ -54,8 +54,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     int strength = 0;
     if (password.length >= 6) strength++;
     if (password.length >= 8) strength++;
-    if (RegExp(r'[A-Z]').hasMatch(password) && RegExp(r'[a-z]').hasMatch(password)) strength++;
-    if (RegExp(r'[0-9]').hasMatch(password) || RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) strength++;
+    if (RegExp(r'[A-Z]').hasMatch(password) &&
+        RegExp(r'[a-z]').hasMatch(password)) strength++;
+    if (RegExp(r'[0-9]').hasMatch(password) ||
+        RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) strength++;
     return strength;
   }
 
@@ -110,7 +112,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const SizedBox(height: 6),
           Text(
             label,
-            style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600),
+            style: TextStyle(
+                color: color, fontSize: 11, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -144,12 +147,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
           barrierDismissible: false,
           builder: (ctx) => AlertDialog(
             backgroundColor: const Color(0xFF162235),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             title: const Row(
               children: [
                 Icon(Icons.check_circle, color: Color(0xFF10B981), size: 28),
                 SizedBox(width: 10),
-                Text('Đăng Ký Thành Công!', style: TextStyle(color: Colors.white, fontSize: 18)),
+                Text('Đăng Ký Thành Công!',
+                    style: TextStyle(color: Colors.white, fontSize: 18)),
               ],
             ),
             content: Text(
@@ -162,7 +167,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF10B981),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 onPressed: () {
                   Navigator.of(ctx).pop(); // Đóng Dialog
@@ -194,7 +200,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           backgroundColor: Colors.redAccent,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     } catch (e) {
@@ -233,14 +240,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         title: const Text(
           'Đăng Ký Cầu Thủ Mới',
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
             child: Form(
               key: _formKey,
               child: Column(
@@ -296,7 +305,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     decoration: BoxDecoration(
                       color: cardColor,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.08)),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.4),
@@ -311,7 +321,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // Họ và tên
                         const Text(
                           'Họ và tên cầu thủ',
-                          style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 13, fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                              color: Color(0xFFCBD5E1),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500),
                         ),
                         const SizedBox(height: 6),
                         TextFormField(
@@ -319,13 +332,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
                             hintText: 'VD: Nguyễn Văn A',
-                            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
-                            prefixIcon: const Icon(Icons.badge_outlined, color: primaryColor),
+                            hintStyle: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.2)),
+                            prefixIcon: const Icon(Icons.badge_outlined,
+                                color: primaryColor),
                             filled: true,
                             fillColor: const Color(0xFF0F172A),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryColor, width: 1.5)),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 14),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none),
+                            focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                    color: primaryColor, width: 1.5)),
                           ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
@@ -339,7 +360,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // Email
                         const Text(
                           'Email đăng ký',
-                          style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 13, fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                              color: Color(0xFFCBD5E1),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500),
                         ),
                         const SizedBox(height: 6),
                         TextFormField(
@@ -348,20 +372,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
                             hintText: 'baller@example.com',
-                            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
-                            prefixIcon: const Icon(Icons.email_outlined, color: primaryColor),
+                            hintStyle: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.2)),
+                            prefixIcon: const Icon(Icons.email_outlined,
+                                color: primaryColor),
                             filled: true,
                             fillColor: const Color(0xFF0F172A),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryColor, width: 1.5)),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 14),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none),
+                            focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                    color: primaryColor, width: 1.5)),
                           ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return 'Vui lòng nhập email';
                             }
                             final email = value.trim();
-                            final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                            final emailRegex = RegExp(
+                                r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
                             if (!emailRegex.hasMatch(email)) {
                               return 'Email không hợp lệ (VD: duc@gmail.com)';
                             }
@@ -380,22 +413,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 children: [
                                   const Text(
                                     'Vị trí sân',
-                                    style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 13, fontWeight: FontWeight.w500),
+                                    style: TextStyle(
+                                        color: Color(0xFFCBD5E1),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500),
                                   ),
                                   const SizedBox(height: 6),
                                   DropdownButtonFormField<String>(
                                     initialValue: _selectedPosition,
                                     dropdownColor: const Color(0xFF0F172A),
-                                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                                    style: const TextStyle(
+                                        color: Colors.white, fontSize: 14),
                                     decoration: InputDecoration(
                                       filled: true,
                                       fillColor: const Color(0xFF0F172A),
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 14),
+                                      border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          borderSide: BorderSide.none),
                                     ),
-                                    items: _positions.map((pos) => DropdownMenuItem(value: pos, child: Text(pos))).toList(),
+                                    items: _positions
+                                        .map((pos) => DropdownMenuItem(
+                                            value: pos, child: Text(pos)))
+                                        .toList(),
                                     onChanged: (val) {
-                                      if (val != null) setState(() => _selectedPosition = val);
+                                      if (val != null)
+                                        setState(() => _selectedPosition = val);
                                     },
                                   ),
                                 ],
@@ -409,22 +455,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 children: [
                                   const Text(
                                     'Chân thuận',
-                                    style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 13, fontWeight: FontWeight.w500),
+                                    style: TextStyle(
+                                        color: Color(0xFFCBD5E1),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500),
                                   ),
                                   const SizedBox(height: 6),
                                   DropdownButtonFormField<String>(
                                     initialValue: _selectedFoot,
                                     dropdownColor: const Color(0xFF0F172A),
-                                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                                    style: const TextStyle(
+                                        color: Colors.white, fontSize: 14),
                                     decoration: InputDecoration(
                                       filled: true,
                                       fillColor: const Color(0xFF0F172A),
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 14),
+                                      border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          borderSide: BorderSide.none),
                                     ),
-                                    items: _preferredFeet.map((foot) => DropdownMenuItem(value: foot, child: Text(foot))).toList(),
+                                    items: _preferredFeet
+                                        .map((foot) => DropdownMenuItem(
+                                            value: foot, child: Text(foot)))
+                                        .toList(),
                                     onChanged: (val) {
-                                      if (val != null) setState(() => _selectedFoot = val);
+                                      if (val != null)
+                                        setState(() => _selectedFoot = val);
                                     },
                                   ),
                                 ],
@@ -437,7 +496,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // Mật khẩu
                         const Text(
                           'Mật khẩu',
-                          style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 13, fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                              color: Color(0xFFCBD5E1),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500),
                         ),
                         const SizedBox(height: 6),
                         TextFormField(
@@ -446,17 +508,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
                             hintText: 'Tối thiểu 6 ký tự',
-                            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
-                            prefixIcon: const Icon(Icons.lock_outline, color: primaryColor),
+                            hintStyle: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.2)),
+                            prefixIcon: const Icon(Icons.lock_outline,
+                                color: primaryColor),
                             suffixIcon: IconButton(
-                              icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: const Color(0xFF94A3B8)),
-                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                              icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  color: const Color(0xFF94A3B8)),
+                              onPressed: () => setState(
+                                  () => _obscurePassword = !_obscurePassword),
                             ),
                             filled: true,
                             fillColor: const Color(0xFF0F172A),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryColor, width: 1.5)),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 14),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none),
+                            focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                    color: primaryColor, width: 1.5)),
                           ),
                           onChanged: (val) => setState(() {}),
                           validator: (value) {
@@ -475,7 +550,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         // Nhập lại mật khẩu
                         const Text(
                           'Xác nhận mật khẩu',
-                          style: TextStyle(color: Color(0xFFCBD5E1), fontSize: 13, fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                              color: Color(0xFFCBD5E1),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500),
                         ),
                         const SizedBox(height: 6),
                         TextFormField(
@@ -484,17 +562,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           style: const TextStyle(color: Colors.white),
                           decoration: InputDecoration(
                             hintText: 'Nhập lại mật khẩu ở trên',
-                            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
-                            prefixIcon: const Icon(Icons.lock_reset_outlined, color: primaryColor),
+                            hintStyle: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.2)),
+                            prefixIcon: const Icon(Icons.lock_reset_outlined,
+                                color: primaryColor),
                             suffixIcon: IconButton(
-                              icon: Icon(_obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: const Color(0xFF94A3B8)),
-                              onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                              icon: Icon(
+                                  _obscureConfirmPassword
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  color: const Color(0xFF94A3B8)),
+                              onPressed: () => setState(() =>
+                                  _obscureConfirmPassword =
+                                      !_obscureConfirmPassword),
                             ),
                             filled: true,
                             fillColor: const Color(0xFF0F172A),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: primaryColor, width: 1.5)),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 14),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none),
+                            focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(
+                                    color: primaryColor, width: 1.5)),
                           ),
                           validator: (value) {
                             if (value == null || value.isEmpty) {
@@ -517,19 +609,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: primaryColor,
                               foregroundColor: Colors.white,
-                              disabledBackgroundColor: primaryColor.withValues(alpha: 0.5),
+                              disabledBackgroundColor:
+                                  primaryColor.withValues(alpha: 0.5),
                               elevation: 4,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
                             ),
                             child: _isLoading
                                 ? const SizedBox(
                                     width: 24,
                                     height: 24,
-                                    child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2.5, color: Colors.white),
                                   )
                                 : const Text(
                                     'ĐĂNG KÝ CẦU THỦ',
-                                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 1.1),
+                                    style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.1),
                                   ),
                           ),
                         ),
@@ -542,7 +640,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text('Đã có tài khoản cầu thủ? ', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14)),
+                      const Text('Đã có tài khoản cầu thủ? ',
+                          style: TextStyle(
+                              color: Color(0xFF94A3B8), fontSize: 14)),
                       GestureDetector(
                         onTap: () => Navigator.of(context).pop(),
                         child: const Text(
