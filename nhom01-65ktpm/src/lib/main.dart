@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/login_screen.dart';
-import 'screens/profile_screen.dart';
+import 'screens/dashboard_screen.dart';
 
 // Getter toàn cục giúp mọi màn hình trong app truy cập SupabaseClient dễ dàng và an toàn
 SupabaseClient get supabase => Supabase.instance.client;
@@ -56,7 +56,7 @@ class BallerDisciplineApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: hasSession ? const ProfileScreen() : const LoginScreen(),
+      home: hasSession ? const DashboardScreen() : const LoginScreen(),
     );
   }
 }
