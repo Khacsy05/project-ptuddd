@@ -54,6 +54,13 @@ class _MatchJournalScreenState extends State<MatchJournalScreen> {
   }
 
   Future<void> _openForm([MatchJournal? existing]) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!')),
+      );
+      return;
+    }
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -61,7 +68,7 @@ class _MatchJournalScreenState extends State<MatchJournalScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => _JournalForm(existing: existing, service: _service, userId: _auth.currentUser!.id),
+      builder: (_) => _JournalForm(existing: existing, service: _service, userId: user.id),
     );
     if (saved == true) _load();
   }

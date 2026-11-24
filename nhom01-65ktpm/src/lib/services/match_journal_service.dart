@@ -21,9 +21,18 @@ class MatchJournalService {
   }
 
   Future<MatchJournal> save(MatchJournal journal) async {
+    if (journal.id == null) {
+      final row = await _client
+          .from('match_journals')
+          .insert(journal.toJson())
+          .select()
+          .single();
+      return MatchJournal.fromJson(row);
+    }
     final row = await _client
         .from('match_journals')
-        .upsert(journal.toJson())
+        .update(journal.toJson())
+        .eq('id', journal.id!)
         .select()
         .single();
     return MatchJournal.fromJson(row);
