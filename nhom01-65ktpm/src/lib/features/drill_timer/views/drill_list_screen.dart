@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/drill_item.dart';
 import '../models/drill_presets.dart';
 
-/// Màn hình danh sách chọn bài tập huấn luyện bóng đá (Drill Selection Screen)
-/// Tuân thủ bảng màu Design System BallerDiscipline (Neon Pitch Dark Theme)
-/// Phụ trách: Bùi Đức Hiệp
 class DrillListScreen extends StatefulWidget {
   final ValueChanged<DrillItem>? onSelectDrill;
   final VoidCallback? onOpenHistory;
@@ -45,14 +42,14 @@ class _DrillListScreenState extends State<DrillListScreen> {
   Color _getCategoryColor(String category) {
     switch (category) {
       case 'Khởi động':
-        return const Color(0xFF38BDF8); // Electric Sky Blue
+        return const Color(0xFF38BDF8);
       case 'Thể lực':
-        return const Color(0xFFF59E0B); // Amber
+        return const Color(0xFFF59E0B);
       case 'Phục hồi':
-        return const Color(0xFFA855F7); // Purple
+        return const Color(0xFFA855F7);
       case 'Kỹ thuật':
       default:
-        return const Color(0xFF10B981); // Emerald Green
+        return const Color(0xFF10B981);
     }
   }
 
@@ -61,7 +58,7 @@ class _DrillListScreenState extends State<DrillListScreen> {
     final drills = DrillPresets.getByCategory(_selectedCategory);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D1117), // Stadium Dark Slate
+      backgroundColor: const Color(0xFF0D1117),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0D1117),
         elevation: 0,
@@ -100,7 +97,6 @@ class _DrillListScreenState extends State<DrillListScreen> {
       ),
       body: Column(
         children: [
-          // Thanh lọc danh mục bài tập
           SizedBox(
             height: 52,
             child: ListView.separated(
@@ -141,13 +137,11 @@ class _DrillListScreenState extends State<DrillListScreen> {
               },
             ),
           ),
-
-          // Danh sách các bài tập Drill
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               itemCount: drills.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              separatorBuilder: (_, __) => const SizedBox(width: 12, height: 12),
               itemBuilder: (context, index) {
                 final drill = drills[index];
                 return _buildDrillCard(context, drill);
@@ -164,7 +158,7 @@ class _DrillListScreenState extends State<DrillListScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B), // Slate Card
+        color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFF334155), width: 1),
       ),
@@ -189,7 +183,6 @@ class _DrillListScreenState extends State<DrillListScreen> {
             children: [
               Row(
                 children: [
-                  // Icon bài tập
                   Container(
                     width: 44,
                     height: 44,
@@ -204,8 +197,6 @@ class _DrillListScreenState extends State<DrillListScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-
-                  // Tên bài tập & Badge phân loại
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,11 +231,9 @@ class _DrillListScreenState extends State<DrillListScreen> {
                       ],
                     ),
                   ),
-
-                  // Nút phát (Play icon)
                   const Icon(
                     Icons.play_circle_fill_rounded,
-                    color: Color(0xFF22C55E), // Neon Green CTA
+                    color: Color(0xFF22C55E),
                     size: 36,
                   ),
                 ],
@@ -265,8 +254,6 @@ class _DrillListScreenState extends State<DrillListScreen> {
               const SizedBox(height: 12),
               const Divider(color: Color(0xFF334155), height: 1),
               const SizedBox(height: 10),
-
-              // Thông số thời gian, số hiệp và thời gian nghỉ
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -311,4 +298,3 @@ class _DrillListScreenState extends State<DrillListScreen> {
     );
   }
 }
-

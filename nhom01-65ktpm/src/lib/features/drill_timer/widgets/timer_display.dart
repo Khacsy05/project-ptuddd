@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/drill_timer_service.dart';
 
-/// Widget hiển thị mặt đồng hồ đếm ngược tập luyện dạng vòng tròn thể thao
-/// Tuân thủ bảng màu Design System BallerDiscipline (Neon Pitch Dark Theme)
-/// Phụ trách: Bùi Đức Hiệp
 class TimerDisplay extends StatelessWidget {
   final String formattedTime;
   final double progress;
@@ -20,23 +17,21 @@ class TimerDisplay extends StatelessWidget {
     required this.totalSets,
   });
 
-  /// Lấy màu chủ đạo theo trạng thái hiện tại (Neon Pitch Palette)
   Color get _statusColor {
     switch (status) {
       case DrillTimerStatus.running:
-        return const Color(0xFF10B981); // Emerald Green (Đang tập)
+        return const Color(0xFF10B981);
       case DrillTimerStatus.resting:
-        return const Color(0xFF38BDF8); // Electric Sky Blue (Nghỉ hiệp)
+        return const Color(0xFF38BDF8);
       case DrillTimerStatus.paused:
-        return const Color(0xFFF59E0B); // Amber (Tạm dừng)
+        return const Color(0xFFF59E0B);
       case DrillTimerStatus.completed:
-        return const Color(0xFF22C55E); // Neon Green (Hoàn thành)
+        return const Color(0xFF22C55E);
       case DrillTimerStatus.idle:
-        return const Color(0xFF10B981); // Emerald Green (Sẵn sàng)
+        return const Color(0xFF10B981);
     }
   }
 
-  /// Nhãn văn bản hiển thị trạng thái trên mặt đồng hồ
   String get _statusLabel {
     switch (status) {
       case DrillTimerStatus.running:
@@ -61,7 +56,7 @@ class TimerDisplay extends StatelessWidget {
       height: 260,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFF161F30), // Muted Stadium Surface
+        color: const Color(0xFF161F30),
         boxShadow: [
           BoxShadow(
             color: activeColor.withOpacity(0.18),
@@ -73,7 +68,6 @@ class TimerDisplay extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Vòng tròn tiến độ nền và thanh tiến trình đếm ngược
           SizedBox(
             width: 236,
             height: 236,
@@ -81,16 +75,13 @@ class TimerDisplay extends StatelessWidget {
               value: progress,
               strokeWidth: 12,
               strokeCap: StrokeCap.round,
-              backgroundColor: const Color(0xFF1E293B), // Slate Card
+              backgroundColor: const Color(0xFF1E293B),
               valueColor: AlwaysStoppedAnimation<Color>(activeColor),
             ),
           ),
-
-          // Thông tin hiển thị bên trong tâm đồng hồ
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Nhãn trạng thái (Badge)
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -115,12 +106,10 @@ class TimerDisplay extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
-
-              // Số đồng hồ đếm ngược MM:SS
               Text(
                 formattedTime,
                 style: const TextStyle(
-                  color: Color(0xFFF8FAFC), // Foreground Crisp White
+                  color: Color(0xFFF8FAFC),
                   fontSize: 56,
                   fontWeight: FontWeight.w700,
                   fontFeatures: [FontFeature.tabularFigures()],
@@ -128,12 +117,10 @@ class TimerDisplay extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-
-              // Thông tin hiệp tập hiện tại
               Text(
                 'Hiệp $currentSet / $totalSets',
                 style: const TextStyle(
-                  color: Color(0xFF94A3B8), // Muted Slate
+                  color: Color(0xFF94A3B8),
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
                 ),
@@ -145,4 +132,3 @@ class TimerDisplay extends StatelessWidget {
     );
   }
 }
-
