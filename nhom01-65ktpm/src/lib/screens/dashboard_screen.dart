@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/habit_model.dart';
+import '../models/habit_preset.dart';
 import '../services/auth_service.dart';
 import '../services/profile_service.dart';
 import '../models/player_profile_model.dart';
@@ -352,6 +353,58 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       )
                     ],
                   ),
+                  if (existingHabit == null) ...[
+                    const SizedBox(height: 12),
+                    InkWell(
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        _showPresetDialog();
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                              const Color(0xFF10B981).withValues(alpha: 0.1),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.4)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.auto_awesome, color: Color(0xFF38BDF8), size: 18),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Hoặc chọn từ Giáo Án Mẫu Pro ⚡',
+                                    style: TextStyle(
+                                      color: Color(0xFF38BDF8),
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Gói tập CR7, Nhạc trưởng, Sát thủ vòng cấm...',
+                                    style: TextStyle(
+                                      color: Color(0xFF94A3B8),
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(Icons.arrow_forward_ios, color: Color(0xFF38BDF8), size: 13),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 18),
 
                   const Text('PHÂN LOẠI NHÓM', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Color(0xFF94A3B8), letterSpacing: 0.8)),
@@ -567,6 +620,297 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             ),
           );
         },
+      ),
+    );
+  }
+
+  // Hiển thị Dialog chọn Giáo án mẫu (Preset Library)
+  void _showPresetDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.88,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (_, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFF131D2E),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              border: Border(
+                top: BorderSide(color: Color(0xFF38BDF8), width: 1.5),
+              ),
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                  width: 44,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF334155),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.auto_awesome, color: Color(0xFF38BDF8), size: 22),
+                          SizedBox(width: 10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'THƯ VIỆN GIÁO ÁN MẪU',
+                                style: TextStyle(
+                                  color: Color(0xFFF8FAFC),
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                              Text(
+                                'Chọn gói bài tập bóng đá chuyên biệt để áp dụng ngay',
+                                style: TextStyle(
+                                  color: Color(0xFF94A3B8),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        icon: const Icon(Icons.close, color: Color(0xFF94A3B8)),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(color: Color(0xFF1E293B), height: 1),
+                Expanded(
+                  child: ListView.builder(
+                    controller: scrollController,
+                    padding: const EdgeInsets.all(16),
+                    itemCount: PresetRepository.presets.length,
+                    itemBuilder: (context, index) {
+                      final preset = PresetRepository.presets[index];
+                      return _buildPresetCard(preset, ctx);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildPresetCard(HabitPreset preset, BuildContext modalCtx) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: preset.accentColor.withValues(alpha: 0.35)),
+        boxShadow: [
+          BoxShadow(
+            color: preset.accentColor.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          collapsedIconColor: preset.accentColor,
+          iconColor: preset.accentColor,
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: preset.accentColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: preset.accentColor.withValues(alpha: 0.4)),
+            ),
+            child: Icon(preset.icon, color: preset.accentColor, size: 24),
+          ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  preset.title,
+                  style: const TextStyle(
+                    color: Color(0xFFF8FAFC),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: preset.accentColor.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  preset.roleTag,
+                  style: TextStyle(
+                    color: preset.accentColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              preset.subtitle,
+              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+            ),
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Divider(color: Color(0xFF1E293B)),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'DANH SÁCH BÀI TẬP TRONG GÓI:',
+                    style: TextStyle(
+                      color: Color(0xFF94A3B8),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ...preset.habits.map((h) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.only(top: 2),
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                color: preset.accentColor.withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.check, size: 10, color: preset.accentColor),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    h.title,
+                                    style: const TextStyle(
+                                      color: Color(0xFFF8FAFC),
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  Text(
+                                    h.type == HabitType.quantitative
+                                        ? 'Mục tiêu: ${h.targetValue.toInt()} ${h.unit} • ${h.description}'
+                                        : 'Hoàn thành / Check-in • ${h.description}',
+                                    style: const TextStyle(
+                                      color: Color(0xFF64748B),
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: preset.accentColor,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      onPressed: () {
+                        _applyPreset(preset);
+                        Navigator.pop(modalCtx);
+                      },
+                      icon: const Icon(Icons.add_task, size: 18),
+                      label: Text(
+                        'ÁP DỤNG GÓI ${preset.roleTag.toUpperCase()}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _applyPreset(HabitPreset preset) {
+    setState(() {
+      for (var sample in preset.habits) {
+        _habits.add(
+          HabitModel(
+            id: '${DateTime.now().millisecondsSinceEpoch}_${sample.title.hashCode}',
+            title: sample.title,
+            description: sample.description,
+            category: sample.category,
+            type: sample.type,
+            targetValue: sample.targetValue,
+            currentValue: 0,
+            unit: sample.unit,
+            isCompletedToday: false,
+          ),
+        );
+      }
+      _checkStreakStatus();
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFF10B981),
+        behavior: SnackBarBehavior.floating,
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.black),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Đã thêm ${preset.habits.length} bài tập từ "${preset.title}" vào giáo án!',
+                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1096,32 +1440,68 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
         ],
       ),
 
-      // Floating Action Button
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(30),
-          gradient: const LinearGradient(
-            colors: [Color(0xFF10B981), Color(0xFF059669)],
+      // Floating Action Buttons: Cả 2 nút Preset & Thêm mới
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          // Nút Chọn Preset Mẫu
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              color: const Color(0xFF131D2E),
+              border: Border.all(color: const Color(0xFF38BDF8), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF38BDF8).withValues(alpha: 0.25),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: FloatingActionButton.extended(
+              heroTag: 'btnPreset',
+              backgroundColor: Colors.transparent,
+              foregroundColor: const Color(0xFF38BDF8),
+              elevation: 0,
+              onPressed: () => _showPresetDialog(),
+              icon: const Icon(Icons.auto_awesome, size: 20, color: Color(0xFF38BDF8)),
+              label: const Text(
+                'GIÁO ÁN MẪU',
+                style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.6, fontSize: 12),
+              ),
+            ),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF10B981).withValues(alpha: 0.4),
-              blurRadius: 14,
-              offset: const Offset(0, 5),
-            )
-          ],
-        ),
-        child: FloatingActionButton.extended(
-          backgroundColor: Colors.transparent,
-          foregroundColor: Colors.black,
-          elevation: 0,
-          onPressed: () => _showAddEditHabitDialog(),
-          icon: const Icon(Icons.add, size: 22, color: Colors.black),
-          label: const Text(
-            'THÊM BÀI TẬP',
-            style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.8, fontSize: 13),
+          const SizedBox(width: 10),
+
+          // Nút Tạo Mới Tự Do
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF10B981), Color(0xFF059669)],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                  blurRadius: 14,
+                  offset: const Offset(0, 5),
+                )
+              ],
+            ),
+            child: FloatingActionButton.extended(
+              heroTag: 'btnAddCustom',
+              backgroundColor: Colors.transparent,
+              foregroundColor: Colors.black,
+              elevation: 0,
+              onPressed: () => _showAddEditHabitDialog(),
+              icon: const Icon(Icons.add, size: 22, color: Colors.black),
+              label: const Text(
+                'TỰ TẠO',
+                style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.8, fontSize: 13),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
