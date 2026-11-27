@@ -6,6 +6,7 @@ import '../services/profile_service.dart';
 import '../models/player_profile_model.dart';
 import 'profile_screen.dart';
 import 'login_screen.dart';
+import 'match_journal_screen.dart';
 
 /// Neon Pitch UI Deluxe (Pro Athlete Level):
 /// Background: Deep Pitch Radial Dark #0A0E17 -> #0D1117
@@ -1049,6 +1050,27 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                     context,
                     MaterialPageRoute(builder: (context) => const ProfileScreen()),
                   ).then((_) => _loadProfileData());
+                },
+              ),
+
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.menu_book, color: Color(0xFFF59E0B), size: 20),
+                ),
+                title: const Text('Nhật ký trận đấu', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFFF8FAFC), fontSize: 14)),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFF94A3B8)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MatchJournalScreen()),
+                  );
                 },
               ),
 
