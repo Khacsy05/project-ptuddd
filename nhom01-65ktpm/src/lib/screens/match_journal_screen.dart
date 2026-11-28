@@ -22,10 +22,20 @@ class _MatchJournalScreenState extends State<MatchJournalScreen> {
   bool _loading = true;
   String? _error;
 
+  String _filterType = 'Tất cả'; // Tất cả, Trận đấu, Buổi tập
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -101,11 +111,34 @@ class _MatchJournalScreenState extends State<MatchJournalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Tính toán thống kê tổng hợp cá nhân
+    final totalMatches = _items.length;
+    final totalGoals = _items.fold(0, (sum, item) => sum + item.goals);
+    final totalAssists = _items.fold(0, (sum, item) => sum + item.assists);
+    final avgRating = totalMatches == 0
+        ? 0.0
+        : _items.fold(0.0, (sum, item) => sum + item.rating) / totalMatches;
+
+    // Lọc theo loại và từ khóa tìm kiếm
+    final filteredItems = _items.where((item) {
+      if (_filterType != 'Tất cả' && item.matchType != _filterType) {
+        return false;
+      }
+      if (_searchQuery.trim().isNotEmpty) {
+        final q = _searchQuery.toLowerCase();
+        final matchReview = (item.reviewContent ?? '').toLowerCase().contains(q);
+        final matchType = item.matchType.toLowerCase().contains(q);
+        final matchDate = item.dateLabel.contains(q);
+        return matchReview || matchType || matchDate;
+      }
+      return true;
+    }).toList();
+
     return Scaffold(
       backgroundColor: const Color(0xFF0A0E17),
       appBar: AppBar(
         backgroundColor: const Color(0xFF131C2E),
-        title: const Text('NHẬT KÝ TRẬN ĐẤU', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+        title: const Text('NHẬT KÝ TRẬN ĐẤU & HIỆU SUẤT', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: const Color(0xFF10B981),
@@ -123,22 +156,141 @@ class _MatchJournalScreenState extends State<MatchJournalScreen> {
                     child: Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFFEF4444))),
                   ),
                 )
-              : _items.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Chưa có nhật ký.\nGhi lại phong độ sau trận hoặc buổi tập.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Color(0xFF94A3B8)),
+              : Column(
+                  children: [
+                    // 1. Header Thống kê hiệu suất cá nhân
+                    Container(
+                      margin: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF131D2E), Color(0xFF18243A)],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFF283856)),
                       ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(14, 12, 14, 88),
-                        itemCount: _items.length,
-                        itemBuilder: (_, i) => _card(_items[i]),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _buildStatItem('Tổng số', '$totalMatches', Icons.sports_soccer, const Color(0xFF38BDF8)),
+                          _buildStatItem('Bàn thắng', '$totalGoals', Icons.sports, const Color(0xFF10B981)),
+                          _buildStatItem('Kiến tạo', '$totalAssists', Icons.trending_up, const Color(0xFFF59E0B)),
+                          _buildStatItem('Sao TB', avgRating.toStringAsFixed(1), Icons.star, const Color(0xFFF59E0B)),
+                        ],
                       ),
                     ),
+
+                    // 2. Thanh tìm kiếm và Bộ lọc
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: Column(
+                        children: [
+                          TextField(
+                            controller: _searchController,
+                            onChanged: (val) => setState(() => _searchQuery = val),
+                            style: const TextStyle(color: Colors.white, fontSize: 13),
+                            decoration: InputDecoration(
+                              hintText: 'Tìm kiếm nhận xét, ngày, loại...',
+                              hintStyle: const TextStyle(color: Color(0xFF64748B)),
+                              prefixIcon: const Icon(Icons.search, color: Color(0xFF94A3B8), size: 20),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear, color: Color(0xFF94A3B8), size: 18),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() => _searchQuery = '');
+                                      },
+                                    )
+                                  : null,
+                              filled: true,
+                              fillColor: const Color(0xFF131D2E),
+                              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF283856))),
+                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF283856))),
+                              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF10B981), width: 1.5)),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              _buildFilterChip('Tất cả'),
+                              const SizedBox(width: 8),
+                              _buildFilterChip('Trận đấu'),
+                              const SizedBox(width: 8),
+                              _buildFilterChip('Buổi tập'),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // 3. Danh sách nhật ký
+                    Expanded(
+                      child: filteredItems.isEmpty
+                          ? Center(
+                              child: Text(
+                                _items.isEmpty
+                                    ? 'Chưa có nhật ký.\nGhi lại phong độ sau trận hoặc buổi tập.'
+                                    : 'Không tìm thấy nhật ký phù hợp.',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Color(0xFF94A3B8)),
+                              ),
+                            )
+                          : RefreshIndicator(
+                              onRefresh: _load,
+                              child: ListView.builder(
+                                padding: const EdgeInsets.fromLTRB(14, 0, 14, 88),
+                                itemCount: filteredItems.length,
+                                itemBuilder: (_, i) => _card(filteredItems[i]),
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 4),
+            Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15)),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Text(label, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+
+  Widget _buildFilterChip(String label) {
+    final selected = _filterType == label;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _filterType = label),
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFF10B981) : const Color(0xFF131D2E),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: selected ? const Color(0xFF10B981) : const Color(0xFF283856)),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? Colors.black : const Color(0xFF94A3B8),
+              fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
+              fontSize: 12,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
