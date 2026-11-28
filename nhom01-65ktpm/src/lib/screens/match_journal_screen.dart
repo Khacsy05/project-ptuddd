@@ -25,6 +25,9 @@ class _MatchJournalScreenState extends State<MatchJournalScreen> {
   String _filterType = 'Tất cả'; // Tất cả, Trận đấu, Buổi tập
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  final PageController _pageController = PageController();
+
+  static const List<String> _tabs = ['Tất cả', 'Trận đấu', 'Buổi tập'];
 
   @override
   void initState() {
@@ -35,6 +38,7 @@ class _MatchJournalScreenState extends State<MatchJournalScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -225,26 +229,21 @@ class _MatchJournalScreenState extends State<MatchJournalScreen> {
                     ),
                     const SizedBox(height: 10),
 
-                    // 3. Danh sách nhật ký
+                    // 3. PageView với hiệu ứng trượt mượt mà giữa các tab lọc
                     Expanded(
-                      child: filteredItems.isEmpty
-                          ? Center(
-                              child: Text(
-                                _items.isEmpty
-                                    ? 'Chưa có nhật ký.\nGhi lại phong độ sau trận hoặc buổi tập.'
-                                    : 'Không tìm thấy nhật ký phù hợp.',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(color: Color(0xFF94A3B8)),
-                              ),
-                            )
-                          : RefreshIndicator(
-                              onRefresh: _load,
-                              child: ListView.builder(
-                                padding: const EdgeInsets.fromLTRB(14, 0, 14, 88),
-                                itemCount: filteredItems.length,
-                                itemBuilder: (_, i) => _card(filteredItems[i]),
-                              ),
-                            ),
+                      child: PageView(
+                        controller: _pageController,
+                        onPageChanged: (index) {
+                          setState(() {
+                            _filterType = _tabs[index];
+                          });
+                        },
+                        children: [
+                          _buildJournalListView(_items), // Tất cả
+                          _buildJournalListView(_items.where((i) => i.matchType == 'Trận đấu').toList()), // Trận đấu
+                          _buildJournalListView(_items.where((i) => i.matchType == 'Buổi tập').toList()), // Buổi tập
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -271,7 +270,19 @@ class _MatchJournalScreenState extends State<MatchJournalScreen> {
     final selected = _filterType == label;
     return Expanded(
       child: InkWell(
-        onTap: () => setState(() => _filterType = label),
+        onTap: () {
+          setState(() {
+            _filterType = label;
+          });
+          final index = _tabs.indexOf(label);
+          if (index != -1) {
+            _pageController.animateToPage(
+              index,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            );
+          }
+        },
         borderRadius: BorderRadius.circular(10),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
@@ -290,6 +301,40 @@ class _MatchJournalScreenState extends State<MatchJournalScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildJournalListView(List<MatchJournal> sourceItems) {
+    final list = sourceItems.where((item) {
+      if (_searchQuery.trim().isNotEmpty) {
+        final q = _searchQuery.toLowerCase();
+        final matchReview = (item.reviewContent ?? '').toLowerCase().contains(q);
+        final matchType = item.matchType.toLowerCase().contains(q);
+        final matchDate = item.dateLabel.contains(q);
+        return matchReview || matchType || matchDate;
+      }
+      return true;
+    }).toList();
+
+    if (list.isEmpty) {
+      return Center(
+        child: Text(
+          _items.isEmpty
+              ? 'Chưa có nhật ký.\nGhi lại phong độ sau trận hoặc buổi tập.'
+              : 'Không tìm thấy nhật ký phù hợp.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Color(0xFF94A3B8)),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(14, 0, 14, 88),
+        itemCount: list.length,
+        itemBuilder: (_, i) => _card(list[i]),
       ),
     );
   }
