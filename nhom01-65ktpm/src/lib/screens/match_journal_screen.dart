@@ -468,8 +468,28 @@ class _JournalFormState extends State<_JournalForm> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final file = await ImagePicker().pickImage(source: source, maxWidth: 1280, imageQuality: 75);
-    if (file != null) setState(() => _picked = file);
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? file = await picker.pickImage(
+        source: source,
+        maxWidth: 1280,
+        maxHeight: 1280,
+        imageQuality: 75,
+      );
+      if (file != null) {
+        setState(() {
+          _picked = file;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Không thể mở máy ảnh/thư viện: $e'),
+          backgroundColor: const Color(0xFFEF4444),
+        ),
+      );
+    }
   }
 
   void _adjustCounter(TextEditingController controller, int delta) {
