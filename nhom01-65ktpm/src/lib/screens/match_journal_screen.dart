@@ -294,6 +294,43 @@ class _MatchJournalScreenState extends State<MatchJournalScreen> {
     );
   }
 
+  void _showFullScreenImage(String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: Center(
+                child: Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stack) => const Text(
+                    'Không thể tải ảnh',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              right: 20,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _card(MatchJournal j) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -311,14 +348,17 @@ class _MatchJournalScreenState extends State<MatchJournalScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (j.imageUrl != null && j.imageUrl!.startsWith('http'))
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.network(
-                    j.imageUrl!,
-                    width: 72,
-                    height: 72,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stack) => _thumbPlaceholder(),
+                GestureDetector(
+                  onTap: () => _showFullScreenImage(j.imageUrl!),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.network(
+                      j.imageUrl!,
+                      width: 72,
+                      height: 72,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stack) => _thumbPlaceholder(),
+                    ),
                   ),
                 )
               else
