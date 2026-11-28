@@ -339,7 +339,7 @@ Sinh viên tự đối chiếu toàn bộ các tiêu chí dưới đây **trư�
 | 6 | **Tệp `danhsachnhom.md` đầy đủ nội dung** | Tệp phải đặt tại `<tennhom-tenlop>/danhsachnhom.md` và có đủ: tên đề tài, lớp học phần, bảng thành viên (Họ tên, MSV, vai trò, nhiệm vụ, % đóng góp, email), hướng dẫn chạy ứng dụng. Không để placeholder như `[Họ và Tên]` hay `[MSV]`. |
 | 7 | **Mã nguồn nằm đúng thư mục `src/`** | Toàn bộ mã nguồn ứng dụng di động đặt trong `<tennhom-tenlop>/src/`. Báo cáo, tài liệu đặc tả nằm trong `<tennhom-tenlop>/docs/`. |
 
-### 9.3. Kiểm tra nội dung commit và tệp tin rác chi tiết
+### 9.3. Kiểm tra nội dung commit và tệp tin rác
 
 | STT | Tiêu chí | Chi tiết yêu cầu |
 | :-: | :--- | :--- |
@@ -353,5 +353,5 @@ Sinh viên tự đối chiếu toàn bộ các tiêu chí dưới đây **trư�
 | :-: | :--- | :--- |
 | 11 | **Hướng PR đúng** | base repository: `oanhcuongdo/project-ptuddd`, base branch: `main`. Head: kho Fork của nhóm, nhánh `<ten-nhom>-<ten-lop>`. |
 | 12 | **Tiêu đề PR đúng định dạng** | `[Nộp bài] <tennhom-tenlop> - <Tên đề tài>`. Ví dụ: `[Nộp bài] nhom01-dhti15a1hn - Ứng dụng quản lý chi tiêu cá nhân`. |
-| 13 | **Nội dung mô tả PR đầy đủ** |     Phần Description ghi rõ: danh sách tính năng đã hoàn thành, danh sách thành viên tham gia nộp bài, ghi chú về hướng dẫn chạy ứng dụng (nếu có yêu cầu cấu hình đặc biệt). |
+| 13 | **Nội dung mô tả PR đầy đủ** | Phần Description ghi rõ: danh sách tính năng đã hoàn thành, danh sách thành viên tham gia nộp bài, ghi chú về hướng dẫn chạy ứng dụng (nếu có yêu cầu cấu hình đặc biệt). |
 | 14 | **Không xâm phạm tệp của nhóm khác** | Mục **Files changed** của PR không được chứa bất kỳ tệp nào thuộc thư mục của nhóm khác, `README.md` gốc, hay `.gitignore`. |
