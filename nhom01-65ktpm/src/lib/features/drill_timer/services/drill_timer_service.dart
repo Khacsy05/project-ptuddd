@@ -2,18 +2,14 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/drill_item.dart';
 
-/// Các trạng thái của đồng hồ bấm giờ tập luyện
 enum DrillTimerStatus {
-  idle, // Chưa bắt đầu
-  running, // Đang đếm ngược thời gian tập
-  paused, // Đang tạm dừng
-  resting, // Đang đếm ngược thời gian nghỉ giải lao giữa hiệp
-  completed, // Đã hoàn thành toàn bộ các hiệp
+  idle,
+  running,
+  paused,
+  resting,
+  completed,
 }
 
-/// Service quản lý logic đếm ngược thời gian tập luyện (Drill Timer Controller)
-/// Phân hệ: Bộ đếm Phiên tập Huấn luyện (Drill Timer & Cloud Log)
-/// Phụ trách: Bùi Đức Hiệp
 class DrillTimerService extends ChangeNotifier {
   DrillItem? _selectedDrill;
   int _currentSet = 1;
@@ -24,12 +20,10 @@ class DrillTimerService extends ChangeNotifier {
 
   Timer? _timer;
 
-  // Callbacks thông báo cho UI (âm thanh / rung phản hồi / chuyển màn hình)
   VoidCallback? onSetCompleted;
   VoidCallback? onRestCompleted;
   VoidCallback? onSessionCompleted;
 
-  // Getters
   DrillItem? get selectedDrill => _selectedDrill;
   int get currentSet => _currentSet;
   int get remainingSeconds => _remainingSeconds;
@@ -44,7 +38,6 @@ class DrillTimerService extends ChangeNotifier {
   bool get isResting => _status == DrillTimerStatus.resting;
   bool get isCompleted => _status == DrillTimerStatus.completed;
 
-  /// Tổng thời gian của giai đoạn hiện tại (để tính phần trăm vòng tròn tiến độ)
   int get currentPhaseTotalSeconds {
     if (_selectedDrill == null) return 1;
     if (_status == DrillTimerStatus.resting ||
@@ -56,27 +49,23 @@ class DrillTimerService extends ChangeNotifier {
         : 1;
   }
 
-  /// Tỷ lệ tiến độ còn lại từ 0.0 -> 1.0 phục vụ hiển thị CircularProgressIndicator
   double get progress {
     final total = currentPhaseTotalSeconds;
     if (total <= 0) return 0.0;
     return (_remainingSeconds / total).clamp(0.0, 1.0);
   }
 
-  /// Định dạng thời gian còn lại thành MM:SS
   String get formattedRemainingTime {
     final minutes = (_remainingSeconds ~/ 60).toString().padLeft(2, '0');
     final seconds = (_remainingSeconds % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
 
-  /// Tổng số phút tập luyện thực tế (tối thiểu 1 phút nếu đã tập > 0 giây)
   int get actualMinutesTrained {
     if (_totalElapsedSeconds == 0) return 0;
     return (_totalElapsedSeconds / 60).ceil();
   }
 
-  /// Chọn bài tập mới và đặt lại toàn bộ thông số về ban đầu
   void selectDrill(DrillItem drill) {
     _stopTimer();
     _selectedDrill = drill;
@@ -88,7 +77,6 @@ class DrillTimerService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Bắt đầu đếm ngược bài tập
   void start() {
     if (_selectedDrill == null) return;
     if (_status == DrillTimerStatus.running) return;
@@ -102,7 +90,6 @@ class DrillTimerService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Tạm dừng đếm ngược
   void pause() {
     if (_status != DrillTimerStatus.running &&
         _status != DrillTimerStatus.resting) {
@@ -114,7 +101,6 @@ class DrillTimerService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Tiếp tục đếm ngược từ trạng thái tạm dừng
   void resume() {
     if (_status != DrillTimerStatus.paused) return;
     _status = _isPausedFromRest
@@ -124,7 +110,6 @@ class DrillTimerService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Đặt lại bộ đếm về hiệp 1 của bài tập hiện tại
   void reset() {
     _stopTimer();
     if (_selectedDrill != null) {
@@ -137,13 +122,11 @@ class DrillTimerService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Kết thúc sớm hiệp hiện tại / Chuyển sang bài tập hoặc hiệp tiếp theo
   void nextSetOrFinish() {
     if (_selectedDrill == null) return;
     _stopTimer();
 
     if (_currentSet < _selectedDrill!.sets) {
-      // Nếu còn hiệp tiếp theo và có thời gian nghỉ -> chuyển sang nghỉ giữa hiệp
       if (_selectedDrill!.restSeconds > 0 &&
           _status != DrillTimerStatus.resting) {
         _status = DrillTimerStatus.resting;
@@ -152,17 +135,14 @@ class DrillTimerService extends ChangeNotifier {
         onSetCompleted?.call();
         _startPeriodicTimer();
       } else {
-        // Bắt đầu hiệp mới ngay lập tức
         _startNextSet();
       }
     } else {
-      // Đã hoàn thành tất cả các hiệp
       _completeSession();
     }
     notifyListeners();
   }
 
-  /// Bỏ qua thời gian nghỉ giữa hiệp để tập tiếp ngay
   void skipRest() {
     if (_status != DrillTimerStatus.resting &&
         !(_status == DrillTimerStatus.paused && _isPausedFromRest)) {
@@ -173,7 +153,6 @@ class DrillTimerService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Kết thúc phiên tập ngay lập tức (dùng khi người dùng bấm Hết buổi tập)
   void finishSessionEarly() {
     _stopTimer();
     _completeSession();
@@ -247,4 +226,3 @@ class DrillTimerService extends ChangeNotifier {
     super.dispose();
   }
 }
-

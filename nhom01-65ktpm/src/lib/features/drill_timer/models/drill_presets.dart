@@ -1,8 +1,5 @@
 import 'drill_item.dart';
 
-/// Danh sách giáo án bài tập bóng đá mẫu (Mock Presets)
-/// Phân hệ: Bộ đếm Phiên tập Huấn luyện (Drill Timer & Cloud Log)
-/// Phụ trách: Bùi Đức Hiệp
 class DrillPresets {
   static const List<String> categories = [
     'Tất cả',
@@ -17,7 +14,7 @@ class DrillPresets {
       id: 'drill_01',
       title: 'Khởi động khớp & Giãn cơ động',
       category: 'Khởi động',
-      durationSeconds: 300, // 5 phút
+      durationSeconds: 300,
       restSeconds: 30,
       sets: 1,
       description:
@@ -28,7 +25,7 @@ class DrillPresets {
       id: 'drill_02',
       title: 'Tâng bóng cảm giác 2 chân',
       category: 'Kỹ thuật',
-      durationSeconds: 600, // 10 phút
+      durationSeconds: 600,
       restSeconds: 60,
       sets: 3,
       description:
@@ -39,7 +36,7 @@ class DrillPresets {
       id: 'drill_03',
       title: 'Rê bóng dích dắc qua cọc mốc',
       category: 'Kỹ thuật',
-      durationSeconds: 900, // 15 phút
+      durationSeconds: 900,
       restSeconds: 90,
       sets: 3,
       description:
@@ -50,7 +47,7 @@ class DrillPresets {
       id: 'drill_04',
       title: 'Chạy bứt tốc con thoi biến tốc',
       category: 'Thể lực',
-      durationSeconds: 1200, // 20 phút
+      durationSeconds: 1200,
       restSeconds: 120,
       sets: 4,
       description:
@@ -61,7 +58,7 @@ class DrillPresets {
       id: 'drill_05',
       title: 'Sút bóng điểm chết & Dứt điểm',
       category: 'Kỹ thuật',
-      durationSeconds: 900, // 15 phút
+      durationSeconds: 900,
       restSeconds: 60,
       sets: 3,
       description:
@@ -72,7 +69,7 @@ class DrillPresets {
       id: 'drill_06',
       title: 'Chuyền bóng 1 chạm & Đỡ bước 1',
       category: 'Kỹ thuật',
-      durationSeconds: 900, // 15 phút
+      durationSeconds: 900,
       restSeconds: 60,
       sets: 3,
       description:
@@ -83,7 +80,7 @@ class DrillPresets {
       id: 'drill_07',
       title: 'Thả lỏng & Giãn cơ sau tập',
       category: 'Phục hồi',
-      durationSeconds: 300, // 5 phút
+      durationSeconds: 300,
       restSeconds: 0,
       sets: 1,
       description:
@@ -92,7 +89,6 @@ class DrillPresets {
     ),
   ];
 
-  /// Lọc danh sách bài tập theo danh mục
   static List<DrillItem> getByCategory(String category) {
     if (category == 'Tất cả') {
       return defaultDrills;

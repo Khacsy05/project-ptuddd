@@ -1,15 +1,12 @@
-/// Model đại diện cho một bài tập huấn luyện bóng đá (Football Drill)
-/// Phân hệ: Bộ đếm Phiên tập Huấn luyện (Drill Timer & Cloud Log)
-/// Phụ trách: Bùi Đức Hiệp
 class DrillItem {
   final String id;
   final String title;
-  final String category; // Kỹ thuật, Thể lực, Chiến thuật, Khởi động
-  final int durationSeconds; // Thời gian tập mỗi hiệp (tính bằng giây)
-  final int restSeconds; // Thời gian nghỉ giải lao giữa hiệp (tính bằng giây)
-  final int sets; // Số hiệp tập luyện
-  final String description; // Hướng dẫn kỹ thuật thực hiện
-  final String iconName; // Tên icon gợi nhớ
+  final String category;
+  final int durationSeconds;
+  final int restSeconds;
+  final int sets;
+  final String description;
+  final String iconName;
 
   const DrillItem({
     required this.id,
@@ -22,24 +19,20 @@ class DrillItem {
     this.iconName = 'sports_soccer',
   });
 
-  /// Chuyển đổi giây thành chuỗi hiển thị MM:SS (VD: 900s -> 15:00)
   String get formattedDuration {
     final minutes = (durationSeconds ~/ 60).toString().padLeft(2, '0');
     final seconds = (durationSeconds % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
 
-  /// Chuyển đổi thời gian nghỉ thành chuỗi hiển thị MM:SS (VD: 60s -> 01:00)
   String get formattedRestDuration {
     final minutes = (restSeconds ~/ 60).toString().padLeft(2, '0');
     final seconds = (restSeconds % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
 
-  /// Số phút tập tính theo đơn vị phút (làm tròn lên để lưu vào database)
   int get durationMinutes => (durationSeconds / 60).ceil();
 
-  /// Chuyển đối tượng sang Map JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -53,7 +46,6 @@ class DrillItem {
     };
   }
 
-  /// Khởi tạo đối tượng từ Map JSON
   factory DrillItem.fromJson(Map<String, dynamic> json) {
     return DrillItem(
       id: json['id'] as String,
@@ -67,7 +59,6 @@ class DrillItem {
     );
   }
 
-  /// Tạo bản sao với các thuộc tính cập nhật mới
   DrillItem copyWith({
     String? id,
     String? title,
@@ -90,4 +81,3 @@ class DrillItem {
     );
   }
 }
-
